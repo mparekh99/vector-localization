@@ -68,6 +68,10 @@ def main():
         CustomObjectMarkers.Diamonds2: {
             "pos": np.array([[-200.0], [0.0], [0.0]]),
             "rot": rotation_z(180)                        # Facing -X
+        }, 
+        CustomObjectMarkers.Hexagons2: {
+            "pos": np.array([[200.0], [0.0], [0.0]]),
+            "rot": rotation_z(0)
         }
     }
 
@@ -81,20 +85,27 @@ def main():
     ax.set_title("Vector and Marker Positions")
     ax.grid(True)
 
-    with anki_vector.Robot("00706c20", show_viewer=True) as robot:
+    with anki_vector.Robot("00706c20") as robot:
 
         robot.vision.enable_custom_object_detection(True)
         
         # Marker 1
         robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType00,
                                     marker=CustomObjectMarkers.Circles2,
-                                    size_mm=20.0,
+                                    size_mm=23.0,
                                     marker_width_mm=23.0, marker_height_mm=23.0)
         # Marker 2
 
         robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType01,
                                     marker=CustomObjectMarkers.Diamonds2,
-                                    size_mm=20.0,
+                                    size_mm=23.0,
+                                    marker_width_mm=23.0, marker_height_mm=23.0)
+        
+        # Marker 3 
+
+        robot.world.define_custom_cube(custom_object_type=CustomObjectTypes.CustomType02,
+                                    marker=CustomObjectMarkers.Hexagons2,
+                                    size_mm=23.0,
                                     marker_width_mm=23.0, marker_height_mm=23.0)
         
         
@@ -109,30 +120,27 @@ def main():
                 vector_position_world = None
         
                 for obj in robot.world.visible_custom_objects:
-                    
-                    # print(obj.object_id)
 
-                    if obj.object_id == 1:
+                    print(obj.archetype.custom_type)
+
+                    if obj.archetype.custom_type == CustomObjectTypes.CustomType00:
                         marker_type = CustomObjectMarkers.Circles2
-                    elif obj.object_id == 2:
+                    elif obj.archetype.custom_type == CustomObjectTypes.CustomType01:
                         marker_type = CustomObjectMarkers.Diamonds2
+                    elif obj.archetype.custom_type == CustomObjectTypes.CustomType02:
+                        marker_type = CustomObjectMarkers.Hexagons2
                     else:
                         continue
 
 
-                    print("Progress")
             
                     # Get marker pose in world (position and rotation)
                     marker_pos_world = marker_world_poses[marker_type]["pos"]
                     marker_rot_world = marker_world_poses[marker_type]["rot"]
-
-                    print("Hello")
       
                     T_cube_in_world = np.eye(4)
                     T_cube_in_world[0:3, 0:3] = marker_rot_world
                     T_cube_in_world[0:3, 3:4] = marker_pos_world
-
-                    print("Going")
                   
                     # Get observed marker pose in Vector frame
                     pose = obj.pose
@@ -140,8 +148,6 @@ def main():
                     t = np.array([[pose.position.x],
                                   [pose.position.y],
                                   [pose.position.z]])
-                    
-                    print("NOOOOO")
                 
                     T_cube_in_vector = np.eye(4)
                     T_cube_in_vector[0:3, 0:3] = R
@@ -153,6 +159,25 @@ def main():
                     # Final transform: Vector in world   matrix multiplication
                     T_vector_in_world = T_cube_in_world @ T_vector_in_cube
                     vector_position_world = T_vector_in_world[0:3, 3]
+
+                    # Heading 
+                    robot_forward_vector = np.array([[1], [0], [0]])
+                    R_world = T_vector_in_world[0:3, 0:3]
+                    heading_vector_world = R_world @ robot_forward_vector
+
+                    # Extract X and Y components of heading
+                    hx, hy = heading_vector_world[0, 0], heading_vector_world[1, 0]
+
+                    # Calculate angle in degrees (0° = +X, counter-clockwise)
+                    heading_angle_rad = np.arctan2(hy, hx)
+                    heading_angle_deg = np.degrees(heading_angle_rad)
+
+                    # Normalize to [0, 360)
+                    if heading_angle_deg < 0:
+                        heading_angle_deg += 360
+
+                    print(f"🧭 Vector heading: {heading_angle_deg:.1f}° relative to +X (global frame)")
+
 
                     print(f"\n🌍 Vector Global Position (x, y, z):")
                     print(vector_position_world.flatten())
@@ -170,7 +195,15 @@ def main():
                 for marker_type, marker_info in marker_world_poses.items():
                     x, y = marker_info["pos"][0][0], marker_info["pos"][1][0]
                     ax.plot(x, y, 'ro')
-                    label = "Circles2" if marker_type == CustomObjectMarkers.Circles2 else "Diamonds2"
+                    
+                    if marker_type == CustomObjectMarkers.Circles2:
+                        label = "Circles2"
+                    elif marker_type == CustomObjectMarkers.Diamonds2:
+                        label = "Diamonds2"
+                    elif marker_type == CustomObjectMarkers.Hexagons2:
+                        label = "Hexagons2"
+
+                
                     ax.text(x + 5, y + 5, label, color='red')
 
                 # Plot Vector
@@ -178,6 +211,21 @@ def main():
                     vx, vy = vector_position_world[0], vector_position_world[1]
                     ax.plot(vx, vy, 'bo')
                     ax.text(vx + 5, vy + 5, "Vector", color='blue')
+                    # Heading vector in world (already computed earlier)
+
+                    # Plot arrow    
+                    hx, hy = heading_vector_world[0, 0], heading_vector_world[1, 0]
+
+                    # Normalize and scale for visualization
+                    heading_length = 30  # length of arrow in mm
+                    norm = np.linalg.norm([hx, hy])
+                    if norm != 0:
+                        hx = (hx / norm) * heading_length
+                        hy = (hy / norm) * heading_length
+
+                        # Draw arrow indicating heading
+                        ax.arrow(vx, vy, hx, hy, head_width=10, head_length=10, fc='blue', ec='blue')
+
 
                 plt.pause(0.1)
                 time.sleep(0.1)
