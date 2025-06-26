@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
 from world_setup import World
 from vector_localizer import VectorLocalizer
+from pose_estimator import PoseEstimator
 import numpy as np
 
 def main():
@@ -12,10 +13,13 @@ def main():
     heading_vector = None
     angle = None
 
-    with anki_vector.Robot("00706c20") as robot:
+    with anki_vector.Robot("006068a2") as robot:
         world = World(robot)
         # print(world.marker_world_poses)
         localizer = VectorLocalizer(world.marker_world_poses)
+
+        estimator = PoseEstimator()
+    
 
         plt.ion()
         fig, ax = plt.subplots()
@@ -28,9 +32,24 @@ def main():
         
         while True:
 
+
+            found_marker = False
+
             for obj in robot.world.visible_custom_objects:
                 pos_world, heading_vector, angle = localizer.get_pose(obj)
+                
+                if pos_world is not None and heading_vector is not None and angle is not None:
+                    # Set pose_estimator privates here 
+                    estimator.reset_with_marker(pos_world, heading_vector)
+                    found_marker = True
+                    break   # Saves me from looping more than I need to
             
+            if found_marker is False:  # No custom objects were found
+                
+                estimator.update_with_odometry(robot.pose)
+
+                pos_world, heading_vector = estimator.get_estimated_pose()
+                
             #PLOTTTING
 
             ax.clear()

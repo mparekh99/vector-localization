@@ -85,7 +85,7 @@ def main():
     ax.set_title("Vector and Marker Positions")
     ax.grid(True)
 
-    with anki_vector.Robot("00706c20") as robot:
+    with anki_vector.Robot("006068a2") as robot:
 
         robot.vision.enable_custom_object_detection(True)
         
