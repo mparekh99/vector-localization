@@ -1,6 +1,9 @@
 import numpy as np
 from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
 
+
+
+### GOTTEN FROM GEEKS FOR GEEKS
 def quaternion_rotation_matrix(Q):
     """
     Convert a quaternion into a full three-dimensional rotation matrix.
@@ -28,12 +31,19 @@ def quaternion_rotation_matrix(Q):
         [r20, r21, r22]
     ])
 
+
+
+
+# https://lavalle.pl/planning/node103.html
 class VectorLocalizer:
     def __init__(self, marker_world_poses):
         self.marker_world_poses = marker_world_poses
 
     def get_pose(self, obj):
         # Match marker type
+
+        # TODO Prioritize Distance 
+        # TODO Revise IF ELSE if 2 are in view 
         if obj.archetype.custom_type == CustomObjectTypes.CustomType00:
             marker_type = CustomObjectMarkers.Circles2
         elif obj.archetype.custom_type == CustomObjectTypes.CustomType01:
@@ -41,37 +51,38 @@ class VectorLocalizer:
         elif obj.archetype.custom_type == CustomObjectTypes.CustomType02:
             marker_type = CustomObjectMarkers.Hexagons2
         else:
-            return None, None, None
+            return None, None
 
         # Known marker world pose
-        marker_pos = self.marker_world_poses[marker_type]["pos"]
-        marker_rot = self.marker_world_poses[marker_type]["rot"]
-        T_cube_world = np.eye(4)
-        T_cube_world[0:3, 0:3] = marker_rot
-        T_cube_world[0:3, 3:4] = marker_pos
+        marker_pos = self.marker_world_poses[marker_type]["pos"]  # Grabs MARKER  Global POSE
+        marker_rot = self.marker_world_poses[marker_type]["rot"]  # Grabs MARKER GLOBAL Rotation I set
 
-        # Observed cube pose in Vector's frame
+        ## Build Homogenous Transofrmation Matrix 
+        marker_matrix = np.eye(4)
+        marker_matrix[0:3, 0:3] = marker_rot
+        marker_matrix[0:3, 3:4] = marker_pos
+
+        # Detected Marker
         R = quaternion_rotation_matrix(obj.pose.rotation)
         t = np.array([[obj.pose.position.x],
                       [obj.pose.position.y],
                       [obj.pose.position.z]])
+        
+        # SCALE
+        scale_factor = 200.0 / 254.5  
+        t = scale_factor * t
 
-        T_cube_vector = np.eye(4)
-        T_cube_vector[0:3, 0:3] = R  
-        T_cube_vector[0:3, 3:4] = t
+        # Build Homogenous Transformation Matrix of Detection
+        detected_matrix = np.eye(4)
+        detected_matrix[0:3, 0:3] = R  
+        detected_matrix[0:3, 3:4] = t
 
-        # Compute Vector pose in world
-        T_vector_cube = np.linalg.inv(T_cube_vector)
-        T_vector_world = T_cube_world @ T_vector_cube
+        # FInd pose in global coordinate system
+        global_pose = marker_matrix @ np.linalg.inv(detected_matrix)
 
-        pos_world = T_vector_world[0:3, 3]
+        pos_world = global_pose[0:3, 3]
 
-        # Heading vector
-        forward = np.array([[1], [0], [0]])
-        heading_vector = T_vector_world[0:3, 0:3] @ forward
-        hx, hy = heading_vector[0, 0], heading_vector[1, 0]
-        angle = np.degrees(np.arctan2(hy, hx))
-        if angle < 0:
-            angle += 360
+        # FIND YAW 
+        yaw = np.arctan2(global_pose[0][1], global_pose[0][0])
 
-        return pos_world, heading_vector, angle
+        return pos_world, yaw

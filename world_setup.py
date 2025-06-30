@@ -11,27 +11,28 @@ class World:
         self.define_markers()
         self.set_head_and_lift()
         self.marker_world_poses = self.define_marker_world_poses()
+
     
     def define_markers(self):
         self.robot.vision.enable_custom_object_detection(True)
 
         self.robot.world.define_custom_cube(CustomObjectTypes.CustomType00,
                                             marker=CustomObjectMarkers.Circles2,
-                                            size_mm=23.0,
-                                            marker_width_mm=23.0,
-                                            marker_height_mm=23.0)
+                                            size_mm=25.4,
+                                            marker_width_mm=25.4,
+                                            marker_height_mm=25.4)
 
         self.robot.world.define_custom_cube(CustomObjectTypes.CustomType01,
                                             marker=CustomObjectMarkers.Diamonds2,
-                                            size_mm=23.0,
-                                            marker_width_mm=23.0,
-                                            marker_height_mm=23.0)
+                                            size_mm=25.4,
+                                            marker_width_mm=25.4,
+                                            marker_height_mm=25.4)
 
         self.robot.world.define_custom_cube(CustomObjectTypes.CustomType02,
                                             marker=CustomObjectMarkers.Hexagons2,
-                                            size_mm=23.0,
-                                            marker_width_mm=23.0,
-                                            marker_height_mm=23.0)
+                                            size_mm=25.4,
+                                            marker_width_mm=25.4,
+                                            marker_height_mm=25.4)
         
     def set_head_and_lift(self):
         self.robot.behavior.set_head_angle(degrees(7.0))
