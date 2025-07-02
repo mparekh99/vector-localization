@@ -56,6 +56,7 @@ class World:
             }
         }
 
+    # https://www.geeksforgeeks.org/computer-graphics/computer-graphics-3d-rotation-transformations/ 
     @staticmethod
     def rotation_z(degrees_angle):
         theta = np.radians(degrees_angle)

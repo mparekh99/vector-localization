@@ -6,6 +6,7 @@ from world_setup import World
 from vector_localizer import VectorLocalizer
 from pose_estimator import PoseEstimator
 import numpy as np
+import keyboard
 
 def main():
 
@@ -13,7 +14,7 @@ def main():
     heading_vector = None
     angle = None
 
-    with anki_vector.Robot("006068a2") as robot:
+    with anki_vector.Robot("006068a2", show_viewer=True) as robot:
         world = World(robot)
         # print(world.marker_world_poses)
         localizer = VectorLocalizer(world.marker_world_poses)
@@ -31,6 +32,18 @@ def main():
         ax.grid(True)
         
         while True:
+
+
+            if keyboard.is_pressed("up"):
+                robot.motors.set_wheel_motors(100, 100)  # move forward
+            elif keyboard.is_pressed("down"):
+                robot.motors.set_wheel_motors(-100, -100)  # move backward
+            elif keyboard.is_pressed("left"):
+                robot.motors.set_wheel_motors(-50, 50)  # turn left
+            elif keyboard.is_pressed("right"):
+                robot.motors.set_wheel_motors(50, -50)  # turn right
+            else:
+                robot.motors.set_wheel_motors(0, 0) 
 
 
             found_marker = False
