@@ -4,8 +4,24 @@ import joblib
 import math
 
 
-## SENSOR STUFF
-scaler = joblib.load('dist_calibrated.pkl')
+## Loading my non linear regression models from the data I collected on each marker
+scaling_models = joblib.load('pose_calibration_models.pkl')
+
+
+
+# CHATGPT
+def normalize_angle(theta):
+    return (theta + np.pi) % (2 * np.pi) - np.pi
+
+
+#CHATGPT
+def angle_mean(angle1, angle2, alpha=0.7):
+    # Convert angles to unit vectors
+    x = alpha * np.cos(angle1) + (1 - alpha) * np.cos(angle2)
+    y = alpha * np.sin(angle1) + (1 - alpha) * np.sin(angle2)
+    return np.arctan2(y, x)
+
+
 
 
 ### GOTTEN FROM GEEKS FOR GEEKS
@@ -36,32 +52,27 @@ def quaternion_rotation_matrix(Q):
         [r20, r21, r22]
     ])
 
-## Got from CHATGPT 
-
-def scaling(y_reported):
-    return scaler.predict([[y_reported]])[0]
-
 
 
 # https://lavalle.pl/planning/node103.html
 class VectorLocalizer:
-    def __init__(self, marker_world_poses):
+    def __init__(self, marker_world_poses, marker_map, initial_yaw):
         self.marker_world_poses = marker_world_poses
+        self.marker_map = marker_map
+        self.initial_yaw = initial_yaw
+        self.yaw_offset = None 
 
-    def get_pose(self, obj):
+    def get_pose(self, obj, yaw_curr):
         # Match marker type
- 
-        if obj.archetype.custom_type == CustomObjectTypes.CustomType00:
-            marker_type = CustomObjectMarkers.Circles2
-            index = 1  # Change scale y coordinate
-        elif obj.archetype.custom_type == CustomObjectTypes.CustomType01:
-            marker_type = CustomObjectMarkers.Diamonds2
-            index = 0  # Scale x coordinate
-        elif obj.archetype.custom_type == CustomObjectTypes.CustomType02:
-            marker_type = CustomObjectMarkers.Hexagons2
-            index = 0  # scale x coordinate
-        else:
+        
+        # Getter because its a dictionary in python
+        marker_info = self.marker_map.get(obj.archetype.custom_type)  # Check for valid Marker 
+        if marker_info is None:
             return None, None
+        
+        marker_type = marker_info["marker_type"]
+        model_label = marker_info["model_label"]
+        axis = marker_info["axis"]
 
         # Known marker world pose
         marker_pos = self.marker_world_poses[marker_type]["pos"]  # Grabs MARKER  Global POSE
@@ -77,6 +88,10 @@ class VectorLocalizer:
         t = np.array([[obj.pose.position.x],
                       [obj.pose.position.y],
                       [obj.pose.position.z]])
+        
+
+        # print("Detected Rotation Matrix:")
+        # print(R)
         
         # # Scale b/c I'm consistently getting underscaled values -- measured at 100mm and got 51.87 mm reading
         # scale_factor = 100.0 / 51.87 
@@ -99,95 +114,47 @@ class VectorLocalizer:
 
         pos_world = global_pose[0:3, 3]
 
-
-        if marker_type is not CustomObjectMarkers.Circles2:
-
-
-            marker_pos = self.marker_world_poses[marker_type]["pos"][0:2].flatten()
-            circle_pos = self.marker_world_poses[CustomObjectMarkers.Circles2]["pos"][0:2].flatten()
-            robot_pos = pos_world[0:2].flatten()
-
-
-            # Robot -> Non-Circle-Marker
-            u = marker_pos - robot_pos
-            # Robot -> Circle Marker
-            v = circle_pos - robot_pos
-
-            proj = (np.dot(u, v) / (np.sqrt(v[0] ** 2 + v[1] ** 2) ** 2)) * v
-
-            # print(u,v)
-
-            # print("proj:", proj, "proj[1]:", proj[1], "type:", type(proj[1]))
-
-
-            temp = np.array([proj[0], 200 - scaling(proj[1])])
-
-            
-            # Project u_new on v_new --> projecting update pos to Current
-
-            u_new = circle_pos - temp
-
-            v_new = marker_pos - temp
-
-            # unit_vector = v / (math.sqrt(v[0] ** 2 + v[1]** 2))
-
-            # # r = starting point + scaled_dist * direction to circle
-            # r = self.marker_world_poses[marker_type]["pos"][0:2] + scaled_dist * unit_vector
-
-
-
-            # Project Back to desired after scaling (FLIP)
-
-            update_proj = (np.dot(v_new, u_new) / (np.sqrt(u_new[0] ** 2 + u_new[1] ** 2) ** 2)) * u_new
-
-
-            pos_world[0] = update_proj[0]
-            pos_world[1] = update_proj[1]
-
-
-
-
-
-            # Project to Circles Marker Y 
-            # u = pos_world[0:2] - self.marker_world_poses[marker_type]["pos"][0:2]
-
-            # # https://www.varsitytutors.com/precalculus-help/find-a-direction-vector-when-given-two-points --- finding directional vector
-            # # NEed to start from terminal point in this case circle
-            # v = self.marker_world_poses[CustomObjectMarkers.Circles2]["pos"][0:2] - self.marker_world_poses[marker_type]["pos"][0:2]
-
-            # # Projection of vector onto another - https://www.youtube.com/watch?v=5AhWoO4IPGM 
-            # proj = (np.dot(u, v) / (math.sqrt(v[0] ** 2 + v[1] ** 2) ** 2)) * v
-
-            # # print(proj)
-
-            # scaled_dist = 200 - scaling(float(proj[1]))  # Because I kept getting errors 
-
-
-            # # Parametric Line Equation - https://www.google.com/search?q=parametric+equations+of+a+line+using+direction+vector+formula&rlz=1C1CHBF_enUS1122US1122&oq=parametric+equations+of+a+line+using+direction+vector+formula&gs_lcrp=EgZjaHJvbWUyCQgAEEUYORigATIHCAEQIRigATIHCAIQIRigAdIBCDI2NzdqMGo3qAIAsAIA&sourceid=chrome&ie=UTF-8#fpstate=ive&vld=cid:5e3daf9e,vid:PyPp4QvQY3Q,st:0 
-            # # In projection frame
-        
-            # unit_vector = v / (math.sqrt(v[0] ** 2 + v[1]** 2))
-
-            # # r = starting point + scaled_dist * direction to circle
-            # r = self.marker_world_poses[marker_type]["pos"][0:2] + scaled_dist * unit_vector
-
-            # # Project found projection onto robot -> marker vector 
-
-            # robot_marker = self.marker_world_poses[marker_type]["pos"][0:2] - pos_world[0:2]
-
-            # update_proj = (np.dot(r, robot_marker) / (math.sqrt(robot_marker[0] ** 2 + robot_marker[1] ** 2) ** 2)) * robot_marker
-
-            # pos_world[0] = update_proj[0]
-            # pos_world[1] = update_proj[1]
-
-            # print(scaled_pose)
-        
+        if model_label == "Diamonds2":  # Because this one is flipped handling negatives would be same if I had a marker in the -y direction
+            pos_world[axis] = scaling_models[model_label].predict([[pos_world[axis]]])[0] - 200
         else:
-
-            pos_world[1] = 200 - scaling(pos_world[1])
+            pos_world[axis] = 200 - scaling_models[model_label].predict([[pos_world[axis]]])[0]
 
 
         # FIND YAW 
-        yaw = np.arctan2(global_pose[0][1], global_pose[0][0])
+        # yaw = np.arctan2(global_pose[0][1], global_pose[0][0])
 
-        return pos_world, yaw
+        # yaw = obj.pose.rotation.angle_z
+
+        # GEOMETRY 
+
+        # # GLOBAL YAW
+        # yaw = np.arctan((marker_pos[0] - pos_world[0]) / (marker_pos[1] - pos_world[1]))
+        ## CHATGPT Suggestion
+
+        marker_yaw = np.arctan2(marker_pos[1] - pos_world[1], marker_pos[0] - pos_world[0])
+
+        marker_yaw = normalize_angle(marker_yaw)
+
+        yaw_curr_rad = normalize_angle(yaw_curr.radians)
+
+        ## Setting yaw offset so ODOMETRY CAN BE USEFUL for GLOBAL USE 
+        if self.yaw_offset == None:
+            self.yaw_offset = normalize_angle(marker_yaw - self.initial_yaw.radians)
+        
+
+        # print(f'LAST YAW --> {self.yaw_offset} -  YAW CURR --> {yaw_curr}')
+        # REINFORCE 
+        odometry_yaw = normalize_angle(yaw_curr_rad + self.yaw_offset)
+
+        print(f'YAW OFFSET --> {self.yaw_offset} = MARKER_YAW {marker_yaw} -  INITIAL  --> {self.initial_yaw.radians}')
+
+        print(f'ODOMETRY --> {odometry_yaw} -  YAW CURR --> {yaw_curr.radians}\n\n')
+
+
+        # print(f'ODOMETRY YAW: {odometry_yaw}\n MARKER YAW: {marker_yaw}\n')
+
+        alpha = .7
+
+        fused_yaw = angle_mean(marker_yaw, odometry_yaw, alpha)
+
+        return pos_world, float(fused_yaw)

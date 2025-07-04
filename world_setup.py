@@ -11,6 +11,24 @@ class World:
         self.define_markers()
         self.set_head_and_lift()
         self.marker_world_poses = self.define_marker_world_poses()
+        self.marker_map = {
+            CustomObjectTypes.CustomType00: {
+                "marker_type": CustomObjectMarkers.Circles2,
+                "model_label": "Circles2",
+                "axis": 1  # Y axis
+            },
+            CustomObjectTypes.CustomType01: {
+                "marker_type": CustomObjectMarkers.Diamonds2,
+                "model_label": "Diamonds2",
+                "axis": 0  # X axis
+            },
+            CustomObjectTypes.CustomType02: {
+                "marker_type": CustomObjectMarkers.Hexagons2,
+                "model_label": "Hexagons2",
+                "axis": 0  # X axis
+            }
+        }
+
 
     
     def define_markers(self):
