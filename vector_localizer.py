@@ -137,7 +137,7 @@ class VectorLocalizer:
 
         yaw_curr_rad = normalize_angle(yaw_curr.radians)
 
-        ## Setting yaw offset so ODOMETRY CAN BE USEFUL for GLOBAL USE 
+        # Setting yaw offset so ODOMETRY CAN BE USEFUL for GLOBAL USE
         if self.yaw_offset == None:
             self.yaw_offset = normalize_angle(marker_yaw - self.initial_yaw.radians)
         

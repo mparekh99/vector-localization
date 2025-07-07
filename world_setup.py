@@ -11,6 +11,7 @@ class World:
         self.define_markers()
         self.set_head_and_lift()
         self.marker_world_poses = self.define_marker_world_poses()
+        # STATIC SETUP
         self.marker_map = {
             CustomObjectTypes.CustomType00: {
                 "marker_type": CustomObjectMarkers.Circles2,
@@ -62,15 +63,18 @@ class World:
         return {
             CustomObjectMarkers.Circles2: {
                 "pos": np.array([[0.0], [200.0], [0.0]]),
-                "rot": self.rotation_z(90)
+                "rot": self.rotation_z(90),
+                "label": "Circle"
             },
             CustomObjectMarkers.Diamonds2: {
                 "pos": np.array([[-200.0], [0.0], [0.0]]),
-                "rot": self.rotation_z(180)
+                "rot": self.rotation_z(180),
+                "label": "Diamond"
             },
             CustomObjectMarkers.Hexagons2: {
                 "pos": np.array([[200.0], [0.0], [0.0]]),
-                "rot": self.rotation_z(0)
+                "rot": self.rotation_z(0),
+                "label": "Hexagon"
             }
         }
 
