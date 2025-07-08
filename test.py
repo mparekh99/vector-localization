@@ -4,7 +4,7 @@ import time
 import matplotlib.pyplot as plt
 from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
 from world_setup import World
-from vector_localizer import VectorLocalizer
+from vector_localizer import VectorLocalizer, angle_mean
 from dead_reckoning import DeadReckoning
 import numpy as np
 import keyboard
@@ -70,7 +70,7 @@ def plot_scene(ax, pose, world):
     dx = length * math.cos(pose.curr_yaw)
     dy = length * math.sin(pose.curr_yaw)
 
-    print(f'{x} -- {y} -- {dx} -- {dy}')
+    # print(f'{x} -- {y} -- {dx} -- {dy}')
 
     ax.arrow(x, y, dx, dy, head_width=10, head_length=10, fc='blue', ec='blue')
 
@@ -93,7 +93,9 @@ def main():
         # Pointing at Circles marker (0,200)
         start_yaw = math.pi / 2
 
-        pose = Pose(start_pose, start_yaw)
+        pose = Pose(start_pose, start_yaw) # Starting YAW MATTERS 
+
+        dead_reckoner = DeadReckoning(start_pose, start_yaw)
 
         listener_thread = threading.Thread(target=teleop_listener, daemon=True)
         listener_thread.start()
@@ -104,7 +106,6 @@ def main():
             plot_scene(ax, pose, world)
             plt.draw()
             plt.pause(0.1)
-
 
             #CHATGPT -- Lets me not deal with blocking for realtime manuevering
             if control_state["forward"]:
@@ -117,6 +118,11 @@ def main():
                 robot.motors.set_wheel_motors(50, -50)
             else:
                 robot.motors.set_wheel_motors(0, 0)
+
+            dead_reckoner.update(robot.pose) # Estimate each time 
+            dr_pose, dr_yaw = dead_reckoner.get_estimated_pose()
+
+            print(f'DR_POSE -> {dr_pose}')
 
 
 
@@ -131,74 +137,18 @@ def main():
                 marker_found = True
                 break
 
-            # if marker_found == False:
-            #     # OBJECT was NOT FOUND!!
+            if marker_found:
+                # Dead Reckoning + Marker Estimation
+                alpha = 0.4 
+                pose.position = alpha * np.array(pose.position) + (1 - alpha) * np.array(dr_pose)
+                pose.curr_yaw = angle_mean(pose.curr_yaw, dr_yaw, alpha)
+                print(f'CALCULATED POSE -> {pose.position}')
+            else:
+                # NO MARKER FOUND 
+                pose.position = dr_pose
+                pose.curr_yaw = dr_yaw
 
-            
-            
-
-            
-
-
-
-
-        # localizer = VectorLocalizer(world.marker_world_poses, world.marker_map, robot.pose.rotation.angle_z)
-
-        # # dead_reckoning = DeadReckoning()
-
-        # while True:
-
-
-            
-
-
-
-
-        #     if keyboard.is_pressed("up"):
-        #         robot.motors.set_wheel_motors(100, 100)  # move forward
-        #     elif keyboard.is_pressed("down"):
-        #         robot.motors.set_wheel_motors(-100, -100)  # move backward
-        #     elif keyboard.is_pressed("left"):
-        #         robot.motors.set_wheel_motors(-50, 50)  # turn left
-        #     elif keyboard.is_pressed("right"):
-        #         robot.motors.set_wheel_motors(50, -50)  # turn right
-        #     else:
-        #         robot.motors.set_wheel_motors(0, 0) 
-
-
-        #     found_marker = False
-
-        #     for obj in robot.world.visible_custom_objects:
-        #         global_pose, yaw = localizer.get_pose(obj, robot.pose.rotation.angle_z)
-
-        #         if global_pose is not None and yaw is not None:
-        #             # Set pose_estimator privates here 
-        #             # dead_reckoning.reset_with_marker(global_pose, yaw) # when visible
-        #             found_marker = True
-        #             break   # Saves me from looping more than I need to
-            
-        #     if found_marker is False:  # No custom objects were found
                 
-        #         print("IDK")
-        #         # dead_reckoning.update_with_odometry(robot.pose)
-        #         # global_pose, yaw = dead_reckoning.get_estimated_pose()
-
-        #     print(f"GLOBAL POSE --> {global_pose}")
-
-        #     # dead_reckoning.update_with_odometry(robot.pose)
-
-
-        #     # print(global_pose)
-        #     # print(yaw)
-
-        #     print(f'FINAL YAW --> {yaw}')
-
-        #     live_plotter(ax, global_pose, yaw, localizer)
-
-
-        #     plt.pause(0.1)
-        #     time.sleep(0.1)
-
 
 if __name__ == "__main__":
     main()

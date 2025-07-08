@@ -90,7 +90,7 @@ class Pose:
         model_label = marker_info["model_label"]
         axis = marker_info["axis"]
 
-        
+
         marker_pos = world.marker_world_poses[marker_type]["pos"]  # Grabs MARKER  Global POSE
         marker_rot = world.marker_world_poses[marker_type]["rot"]  # Grabs MARKER GLOBAL Rotation I set
 
@@ -102,9 +102,16 @@ class Pose:
         else:
             pos_world[axis] = 200 - scaling_models[model_label].predict([[pos_world[axis]]])[0]
 
+        # Scaled more? 
         
         # Update-- Grab 2D pose b/c z remains constant 
+        
         self.position = np.array([pos_world[0], pos_world[1]])
+
+        ## REINFORCE
+
+
+
 
         # print(f'Position --> {self.position}')
 
@@ -119,5 +126,6 @@ class Pose:
         odometry_yaw = self.start_yaw - curr_yaw
 
         self.curr_yaw = angle_mean(marker_yaw, odometry_yaw, 0.7).item()  # Bc it returns 1d array 
+
         
         return 
