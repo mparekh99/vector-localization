@@ -12,7 +12,6 @@ import math
 from pose import Pose
 
 
-
 #TODO HANDLE POSE 
 #  To make it simpler I'll say I know the vector's hard coded start pose.
 
@@ -89,13 +88,13 @@ def main():
         # STORE STARTING YAW
         ## FOR NOW HARD CODE IT IN RADIANS == Makes it simpler to start 
 
-        start_pose = [0, 0]
+        start_pose = [0, 0, 0]
         # Pointing at Circles marker (0,200)
         start_yaw = math.pi / 2
 
         pose = Pose(start_pose, start_yaw) # Starting YAW MATTERS 
 
-        dead_reckoner = DeadReckoning(start_pose, start_yaw)
+        dead_reckoner = DeadReckoning(start_pose, start_yaw, robot.pose)
 
         listener_thread = threading.Thread(target=teleop_listener, daemon=True)
         listener_thread.start()
@@ -122,7 +121,7 @@ def main():
             dead_reckoner.update(robot.pose) # Estimate each time 
             dr_pose, dr_yaw = dead_reckoner.get_estimated_pose()
 
-            print(f'DR_POSE -> {dr_pose}')
+            # print(f'DR_POSE -> {dr_pose}')
 
 
 
@@ -139,10 +138,12 @@ def main():
 
             if marker_found:
                 # Dead Reckoning + Marker Estimation
-                alpha = 0.4 
-                pose.position = alpha * np.array(pose.position) + (1 - alpha) * np.array(dr_pose)
+                # print(f'DR POS --> {dr_pose}  CALCULATED -> {pose.position}')
+                # print(f'DR YAW --> {dr_yaw}   CALCULATED -> {pose.curr_yaw}\n')
+                alpha = 0.7 
+                pose.position = alpha * np.array(pose.position) + (1 - alpha) * dr_pose
                 pose.curr_yaw = angle_mean(pose.curr_yaw, dr_yaw, alpha)
-                print(f'CALCULATED POSE -> {pose.position}')
+                
             else:
                 # NO MARKER FOUND 
                 pose.position = dr_pose
