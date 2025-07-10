@@ -10,25 +10,7 @@ class World:
         self.robot = robot
         self.define_markers()
         self.set_head_and_lift()
-        self.marker_world_poses = self.define_marker_world_poses()
-        # STATIC SETUP
-        self.marker_map = {
-            CustomObjectTypes.CustomType00: {
-                "marker_type": CustomObjectMarkers.Circles2,
-                "model_label": "Circles2",
-                "axis": 1  # Y axis
-            },
-            CustomObjectTypes.CustomType01: {
-                "marker_type": CustomObjectMarkers.Diamonds2,
-                "model_label": "Diamonds2",
-                "axis": 0  # X axis
-            },
-            CustomObjectTypes.CustomType02: {
-                "marker_type": CustomObjectMarkers.Hexagons2,
-                "model_label": "Hexagons2",
-                "axis": 0  # X axis
-            }
-        }
+        self.marker_world = self.define_marker_world()
 
 
     
@@ -58,23 +40,30 @@ class World:
         self.robot.behavior.set_lift_height(0.0)
     
 
-    def define_marker_world_poses(self): 
+    def define_marker_world(self): 
         
         return {
-            CustomObjectMarkers.Circles2: {
+            15: {
                 "pos": np.array([[0.0], [200.0], [0.0]]),
                 "rot": self.rotation_z(90),
-                "label": "Circle"
+                "label": "Circle",
+                "marker_type": CustomObjectMarkers.Circles2,
+                "axis": 1  # Y axis
             },
-            CustomObjectMarkers.Diamonds2: {
+            16: {
                 "pos": np.array([[-200.0], [0.0], [0.0]]),
                 "rot": self.rotation_z(180),
-                "label": "Diamond"
+                "label": "Diamond",
+                "marker_type": CustomObjectMarkers.Diamonds2,
+                "axis": 0  # X axis
             },
-            CustomObjectMarkers.Hexagons2: {
+            17: {
                 "pos": np.array([[200.0], [0.0], [0.0]]),
                 "rot": self.rotation_z(0),
-                "label": "Hexagon"
+                "label": "Hexagon",
+                "marker_type": CustomObjectMarkers.Hexagons2,
+                "model_label": "Hexagons2",
+                "axis": 0  # X axis
             }
         }
 

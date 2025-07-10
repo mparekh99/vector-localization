@@ -13,19 +13,6 @@ from pose_fix import Pose
 from anki_vector.events import Events
 
 
-
-#TODO HANDLE POSE 
-#  To make it simpler I'll say I know the vector's hard coded start pose.
-
-# Breaking down the problem, Knowing Global Pose on Start : Loop this 
-#1) I CAN NOT see the marker, DEAD RECKOINING - Until below 
-# 2) I CAN see the marker -- relocalize/ update 
-
-
-
-#TODO FIX TELEOP
-#TODO FIX ORIENTATION
-
 #CHATGPT
 control_state = {
     "left": False,
@@ -55,8 +42,8 @@ def plot_scene(ax, pose, world):
     ax.grid(True)
 
     # Plot markers
-    for marker_type, marker_info in world.marker_world_poses.items():
-        x, y = marker_info["pos"][0][0], marker_info["pos"][1][0]
+    for marker_type, marker_info in world.marker_world.items():
+        x, y = marker_info["pos"][0], marker_info["pos"][1]
         ax.plot(x, y, 'ro')
         ax.text(x + 5, y + 5, f'{marker_info["label"]}', color='red', fontsize=8)
 
@@ -76,37 +63,38 @@ def plot_scene(ax, pose, world):
     ax.arrow(x, y, dx, dy, head_width=10, head_length=10, fc='blue', ec='blue')
 
 
-
-
 def main():
-
     with anki_vector.Robot("006068a2") as robot:
-
         plt.ion()
         fig, ax = plt.subplots()
-        
+
         world = World(robot)
-
-        # STORE STARTING YAW
-        ## FOR NOW HARD CODE IT IN RADIANS == Makes it simpler to start 
-
         start_pose = [0, 0, 0]
-        # Pointing at Circles marker (0,200)
         start_yaw = math.pi / 2
+        pose = Pose(start_pose, start_yaw, robot.pose)
 
-        pose = Pose(start_pose, start_yaw, robot.pose) # Starting YAW MATTERS 
+        # ✅ Define callback *inside* main
+        # def on_robot_observed(robot, event_type, event):
+        #     print(event)
+        #     marker_pos = pose.update_pos(event, world, robot)
 
+        # # ✅ Subscribe ONCE
+        # robot.events.subscribe(on_robot_observed, Events.robot_observed_object)
+
+        # Start teleop thread
         listener_thread = threading.Thread(target=teleop_listener, daemon=True)
         listener_thread.start()
 
-
         while True:
-            #PLOT MATPLOT 
+            # Update dead reckoning
+            pose.dead_reckoning(robot.pose)
+
+            #Plot
             plot_scene(ax, pose, world)
             plt.draw()
             plt.pause(0.1)
 
-            #CHATGPT -- Lets me not deal with blocking for realtime manuevering
+            # Teleop
             if control_state["forward"]:
                 robot.motors.set_wheel_motors(100, 100)
             elif control_state["backward"]:
@@ -117,42 +105,9 @@ def main():
                 robot.motors.set_wheel_motors(50, -50)
             else:
                 robot.motors.set_wheel_motors(0, 0)
-        
-            pose.dead_reckoning(robot.pose)
 
-            # print(f'DR_POSE -> {dr_pose}')
-
-
-
-            marker_found = False
-
-            
-
-
-            # for obj in robot.world.visible_custom_objects: # #TODO PROF asked for 8 markers using 3 at the moment 
-            #     # If found :
-            #     # # Reinforce / Update 
-            #     marker_pos = pose.update_pos(obj, world, robot)
-            #     yaw_curr = robot.pose.rotation.angle_z.radians
-            #     pose.update_yaw(obj, marker_pos, yaw_curr)
-            #     marker_found = True
-            #     break
-
-
-
-
-            # if marker_found:
-            #     # Dead Reckoning + Marker Estimation
-            #     print(f'DR POS --> {dr_pose}  CALCULATED -> {pose.position}')
-            #     print(f'DR YAW --> {dr_yaw}   CALCULATED -> {pose.curr_yaw}\n')
-            #     alpha = 0.7 
-            #     pose.position = alpha * np.array(pose.position) + (1 - alpha) * np.array(dr_pose)
-            #     pose.curr_yaw = angle_mean(pose.curr_yaw, dr_yaw, alpha)
-                
-            # else:
-            #     # NO MARKER FOUND 
-            #     pose.position = dr_pose
-            #     pose.curr_yaw = dr_yaw
+        # Optional: Unsubscribe if exiting loop (e.g. KeyboardInterrupt)
+        # robot.events.unsubscribe(on_robot_observed, Events.robot_observed_object)
 
                 
 

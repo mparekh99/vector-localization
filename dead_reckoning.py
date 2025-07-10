@@ -63,8 +63,8 @@ class DeadReckoning:
             self.last_robot_pose = curr_pose
             return
         
-        print(curr_pose.position.x, curr_pose.position.y, curr_pose.position.z)
-        print(f'CURRENT YAW --> {self.yaw}')
+        # print(curr_pose.position.x, curr_pose.position.y, curr_pose.position.z)
+        # print(f'CURRENT YAW --> {self.yaw}')
 
 
         curr_global = self.transform @ self.pose_to_matrix(curr_pose)
@@ -84,7 +84,7 @@ class DeadReckoning:
         self.yaw += dtheta
         self.last_robot_pose = curr_pose
 
-        print(f"Updated DR: pos={self.position}, yaw={self.yaw:.2f} rad")
+        # print(f"Updated DR: pos={self.position}, yaw={self.yaw:.2f} rad")
         
         return 0
 

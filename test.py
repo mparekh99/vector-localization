@@ -138,10 +138,10 @@ def main():
 
             if marker_found:
                 # Dead Reckoning + Marker Estimation
-                # print(f'DR POS --> {dr_pose}  CALCULATED -> {pose.position}')
-                # print(f'DR YAW --> {dr_yaw}   CALCULATED -> {pose.curr_yaw}\n')
+                print(f'DR POS --> {dr_pose}  CALCULATED -> {pose.position}')
+                print(f'DR YAW --> {dr_yaw}   CALCULATED -> {pose.curr_yaw}\n')
                 alpha = 0.7 
-                pose.position = alpha * np.array(pose.position) + (1 - alpha) * dr_pose
+                pose.position = alpha * np.array(pose.position) + (1 - alpha) * np.array(dr_pose)
                 pose.curr_yaw = angle_mean(pose.curr_yaw, dr_yaw, alpha)
                 
             else:

@@ -110,10 +110,10 @@ class Pose:
 
         ## REINFORCE
 
+        
 
 
-
-        # print(f'Position --> {self.position}')
+        print(f'Position --> {self.position}')
 
 
         return marker_pos
