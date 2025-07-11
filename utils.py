@@ -46,7 +46,7 @@ def frame_transformation(obj, marker_pos, marker_rot):
 
     quanterion = Quaternion(obj.pose.q0, obj.pose.q1, obj.pose.q2, obj.pose.q3) 
     
-
+    print(obj.pose)
 
     # Detected Marker
     R = quaternion_rotation_matrix(quanterion)
@@ -68,6 +68,7 @@ def frame_transformation(obj, marker_pos, marker_rot):
     global_pose = marker_matrix @ inv_detected
 
     pos_world = global_pose[0:3, 3]
+    
 
     return pos_world
 
@@ -77,3 +78,10 @@ def angle_mean(angle1, angle2, alpha):
     x = alpha * np.cos(angle1) + (1 - alpha) * np.cos(angle2)
     y = alpha * np.sin(angle1) + (1 - alpha) * np.sin(angle2)
     return np.arctan2(y, x)
+
+# Best-fit line: y = -5.0768x + 1406.6211
+# Scaling function 
+def scale_factor(raw_x):
+    y = -5.0768 * (raw_x) + 1406.6211
+    print(f'AFTER SCALE {y}\n')
+    return y

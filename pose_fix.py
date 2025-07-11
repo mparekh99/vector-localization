@@ -3,11 +3,10 @@ import warnings
 import numpy as np
 import joblib
 import math
-from utils import quaternion_rotation_matrix, frame_transformation, is_vector_moving, angle_mean
+from utils import quaternion_rotation_matrix, frame_transformation, scale_factor, angle_mean
 
 
-## Loading my non linear regression models from the data I collected on each marker
-scaling_models = joblib.load('pose_calibration_models.pkl')
+
 
 # TODO ADD DEADRECKONING WITHIN CLASS
 class Pose:
@@ -22,6 +21,13 @@ class Pose:
         # self.position = start_pose
         # self.start_yaw = start_yaw
         # self.curr_yaw = 0
+
+    def get_dr_x(self):
+        return self.dr_pos[0, 0].item()
+    
+    def get_dr_y(self):
+        return self.dr_pos[1, 0].item()
+
 
     def get_x(self):
         return self.position[0, 0].item()
@@ -94,7 +100,7 @@ class Pose:
 
 
 
-        print(f"Updated DR: pos={self.dr_pos}, yaw={self.dr_yaw:.2f} rad")
+        # print(f"Updated DR: pos={self.dr_pos}, yaw={self.dr_yaw:.2f} rad")
         
         return 0
     
@@ -109,19 +115,27 @@ class Pose:
         marker_type = marker_info["marker_type"]
         model_label = marker_info["label"]
         axis = marker_info["axis"]
+        constant = marker_info["constant"]
 
 
         marker_pos = marker_info["pos"]  # Grabs MARKER  Global POSE
         marker_rot = marker_info["rot"]  # Grabs MARKER GLOBAL Rotation I set
 
+        # SCALE RAW DATA --- based on marker I set scale either x or y 
+        print(f'BEFORE SCALE -- {getattr(event.pose, axis)}')
+        setattr(event.pose, axis, scale_factor(getattr(event.pose, axis)))
+
+
         # Homogenous Transformation + Inverse --> Frame Transformations to get vector pose from marker 
         pos_world = frame_transformation(event, marker_pos, marker_rot)
 
-        # # SCALING 
-        # if model_label == "Diamonds2":  # Because this one is flipped handling negatives would be same if I had a marker in the -y direction
-        #     pos_world[axis] = scaling_models[model_label].predict([[pos_world[axis]]])[0] - 200
-        # else:
-        #     pos_world[axis] = 200 - scaling_models[model_label].predict([[pos_world[axis]]])[0]
+        #LAST SCALE
+        # if model_label == "Circle":  # Because this one is flipped handling negatives would be same if I had a marker in the -y direction
+        #     pos_world[1] = pos_world[1]
+        # elif model_label == "Diamond":
+        #     pos_world[0] = pos_world[0] + 200
+        # elif model_label == "Hexagon":
+        #     pos_world[0] = pos_world[0] - 200
 
         
         self.position = np.array([pos_world[0], pos_world[1], pos_world[2]]).reshape(3, 1)

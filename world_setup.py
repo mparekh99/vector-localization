@@ -43,27 +43,32 @@ class World:
     def define_marker_world(self): 
         
         return {
+            # CIRCLE
             15: {
                 "pos": np.array([[0.0], [200.0], [0.0]]),
                 "rot": self.rotation_z(90),
                 "label": "Circle",
                 "marker_type": CustomObjectMarkers.Circles2,
-                "axis": 1  # Y axis
+                "axis": "y",
+                "constant": 1,
             },
+            # DIAMOND
             16: {
                 "pos": np.array([[-200.0], [0.0], [0.0]]),
                 "rot": self.rotation_z(180),
                 "label": "Diamond",
                 "marker_type": CustomObjectMarkers.Diamonds2,
-                "axis": 0  # X axis
+                "axis": "x",
+                "constant": 1
             },
+            # HEXAGON
             17: {
                 "pos": np.array([[200.0], [0.0], [0.0]]),
                 "rot": self.rotation_z(0),
                 "label": "Hexagon",
                 "marker_type": CustomObjectMarkers.Hexagons2,
-                "model_label": "Hexagons2",
-                "axis": 0  # X axis
+                "axis": "x",
+                "constant": -1
             }
         }
 

@@ -11,6 +11,8 @@ import keyboard
 import math
 from pose_fix import Pose
 from anki_vector.events import Events
+import csv
+from utils import scale_factor
 
 
 #CHATGPT
@@ -48,8 +50,8 @@ def plot_scene(ax, pose, world):
         ax.text(x + 5, y + 5, f'{marker_info["label"]}', color='red', fontsize=8)
 
     # Plot Vector's position and heading
-    x = pose.get_x()
-    y = pose.get_y()
+    x = pose.get_dr_x()
+    y = pose.get_dr_y()
     ax.plot(x, y, 'bo')
     ax.text(x + 5, y + 5, "Vector", color='blue')
 
@@ -64,9 +66,9 @@ def plot_scene(ax, pose, world):
 
 
 def main():
-    with anki_vector.Robot("006068a2") as robot:
-        plt.ion()
-        fig, ax = plt.subplots()
+    with anki_vector.Robot("00603f86") as robot:
+        # plt.ion()
+        # fig, ax = plt.subplots()
 
         world = World(robot)
         start_pose = [0, 0, 0]
@@ -74,25 +76,36 @@ def main():
         pose = Pose(start_pose, start_yaw, robot.pose)
 
         # ✅ Define callback *inside* main
-        # def on_robot_observed(robot, event_type, event):
-        #     print(event)
-        #     marker_pos = pose.update_pos(event, world, robot)
+        def on_robot_observed(robot, event_type, event):
+            
+            # print(scale_x(event.pose.x))
+            # print(f'{event.pose.x, event.pose.y, event.pose.z}\n')
 
-        # # ✅ Subscribe ONCE
-        # robot.events.subscribe(on_robot_observed, Events.robot_observed_object)
+
+            # with open('circle_marker_data.csv', 'a', newline='') as csvfile:
+            #     writer = csv.writer(csvfile)
+            #     # For each reading inside your main loop or callback:
+            #     raw_dist = event.pose.x  # e.g., raw[0]
+            #     true_pos = pose.get_dr_y()   # e.g., robot pose or known ground truth
+                
+            #     writer.writerow([raw_dist, true_pos])
+            marker_pos = pose.update_pos(event, world, robot)
+
+        # ✅ Subscribe ONCE
+        robot.events.subscribe(on_robot_observed, Events.robot_observed_object)
 
         # Start teleop thread
         listener_thread = threading.Thread(target=teleop_listener, daemon=True)
         listener_thread.start()
 
         while True:
-            # Update dead reckoning
-            pose.dead_reckoning(robot.pose)
+            # # Update dead reckoning
+            # pose.dead_reckoning(robot.pose)
 
-            #Plot
-            plot_scene(ax, pose, world)
-            plt.draw()
-            plt.pause(0.1)
+            # # #Plot
+            # plot_scene(ax, pose, world)
+            # plt.draw()
+            # plt.pause(0.1)
 
             # Teleop
             if control_state["forward"]:
@@ -106,8 +119,6 @@ def main():
             else:
                 robot.motors.set_wheel_motors(0, 0)
 
-        # Optional: Unsubscribe if exiting loop (e.g. KeyboardInterrupt)
-        # robot.events.unsubscribe(on_robot_observed, Events.robot_observed_object)
 
                 
 
