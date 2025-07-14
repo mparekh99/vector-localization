@@ -46,7 +46,7 @@ def frame_transformation(obj, marker_pos, marker_rot):
 
     quanterion = Quaternion(obj.pose.q0, obj.pose.q1, obj.pose.q2, obj.pose.q3) 
     
-    print(obj.pose)
+    # print(obj.pose)
 
     # Detected Marker
     R = quaternion_rotation_matrix(quanterion)
@@ -79,9 +79,19 @@ def angle_mean(angle1, angle2, alpha):
     y = alpha * np.sin(angle1) + (1 - alpha) * np.sin(angle2)
     return np.arctan2(y, x)
 
-# Best-fit line: y = -5.0768x + 1406.6211
 # Scaling function 
-def scale_factor(raw_x):
-    y = -5.0768 * (raw_x) + 1406.6211
-    print(f'AFTER SCALE {y}\n')
+def scale_factor(raw, marker_name):
+
+    y = 0
+    if marker_name == "Circle":
+        y = -5.8458 * raw + 1590.7008
+    elif marker_name == "Diamond":
+        y = 6.6093 * raw - 1986.9060
+    elif marker_name == "Hexagon":
+        y = 5.6176 * raw + 1654.8487
+
+# Model: true = -3.8178 * raw + 1058.5996
+# Model: true = 6.1470 * raw + -1829.8999
+# Model: true = 5.2695 * raw + 1607.5901
+
     return y

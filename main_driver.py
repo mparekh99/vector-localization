@@ -66,7 +66,7 @@ def plot_scene(ax, pose, world):
 
 
 def main():
-    with anki_vector.Robot("00603f86") as robot:
+    with anki_vector.Robot("00706c20") as robot:
         # plt.ion()
         # fig, ax = plt.subplots()
 
@@ -75,23 +75,49 @@ def main():
         start_yaw = math.pi / 2
         pose = Pose(start_pose, start_yaw, robot.pose)
 
-        # ✅ Define callback *inside* main
         def on_robot_observed(robot, event_type, event):
             
-            # print(scale_x(event.pose.x))
-            # print(f'{event.pose.x, event.pose.y, event.pose.z}\n')
+            print(event.pose.x, event.pose.y)
+            
+            marker_info = world.marker_world.get(event.object_type)
+            marker_name = marker_info["label"]
+            axis = marker_info["axis"]
+
+            # if marker_name == "Circle":  # Marker at [0, 200]
+            #     raw = event.pose.x
+            #     corrected = -5.8458 * raw + 1590.7008
+            #     print(f"Corrected Y from Circle: {corrected:.2f} mm")
+
+            # elif marker_name == "Hexagon":  # Marker at [200, 0]
+            #     raw = event.pose.y
+            #     corrected = 5.6176 * raw + 1654.8487
+            #     print(f"Corrected X from Hexagon: {corrected:.2f} mm")
+
+            # elif marker_name == "Diamond":  # Marker at [-200, 0]
+            #     raw = event.pose.y
+            #     corrected = 6.6093 * raw - 1986.9060
+            #     print(f"Corrected X from Diamond: {corrected:.2f} mm")
 
 
-            # with open('circle_marker_data.csv', 'a', newline='') as csvfile:
+            # filename_map = {
+            #     "Circle": r"C:\Users\mihpa\swarm\flocking\companion_cube\data\circle_data.csv",
+            #     "Hexagon": r"C:\Users\mihpa\swarm\flocking\companion_cube\data\hexagon_data.csv",
+            #     "Diamond": r"C:\Users\mihpa\swarm\flocking\companion_cube\data\diamond_data.csv"
+            # }
+
+
+            # with open(filename_map[marker_name], 'a', newline='') as csvfile:
             #     writer = csv.writer(csvfile)
             #     # For each reading inside your main loop or callback:
-            #     raw_dist = event.pose.x  # e.g., raw[0]
-            #     true_pos = pose.get_dr_y()   # e.g., robot pose or known ground truth
-                
-            #     writer.writerow([raw_dist, true_pos])
-            marker_pos = pose.update_pos(event, world, robot)
+            #     raw_dist = event.pose.x if marker_name == 'Circle' else event.pose.y
 
-        # ✅ Subscribe ONCE
+            #     true_pos = pose.get_dr_y() if marker_name == 'Circle' else pose.get_dr_x()
+            #     label = marker_info["label"]
+
+            #     writer.writerow([raw_dist, true_pos, label])
+            #     print(raw_dist, true_pos)
+            pose.update_pos(event, world, robot)
+
         robot.events.subscribe(on_robot_observed, Events.robot_observed_object)
 
         # Start teleop thread
@@ -101,6 +127,8 @@ def main():
         while True:
             # # Update dead reckoning
             # pose.dead_reckoning(robot.pose)
+
+            # print(robot.pose)
 
             # # #Plot
             # plot_scene(ax, pose, world)

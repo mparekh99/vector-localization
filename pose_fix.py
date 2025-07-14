@@ -6,7 +6,7 @@ import math
 from utils import quaternion_rotation_matrix, frame_transformation, scale_factor, angle_mean
 
 
-
+#TODO FIX DEAD RECKONING -- HAS TO DO WITH ICC 
 
 # TODO ADD DEADRECKONING WITHIN CLASS
 class Pose:
@@ -77,9 +77,6 @@ class Pose:
             self.last_robot_pose = curr_pose
             return
         
-        # print(curr_pose.position.x, curr_pose.position.y, curr_pose.position.z)
-        # print(f'CURRENT YAW --> {self.yaw}')
-
 
         curr_global = self.transform @ self.pose_to_matrix(curr_pose)
         last_global = self.transform @ self.pose_to_matrix(self.last_robot_pose)
@@ -98,9 +95,7 @@ class Pose:
         self.dr_yaw += dtheta
         self.last_robot_pose = curr_pose
 
-
-
-        # print(f"Updated DR: pos={self.dr_pos}, yaw={self.dr_yaw:.2f} rad")
+        print(f"Updated DR: pos={self.dr_pos[0], self.dr_pos}")
         
         return 0
     
@@ -113,7 +108,7 @@ class Pose:
         marker_info = world.marker_world.get(event.object_type)
         
         marker_type = marker_info["marker_type"]
-        model_label = marker_info["label"]
+        marker_name = marker_info["label"]
         axis = marker_info["axis"]
         constant = marker_info["constant"]
 
@@ -122,20 +117,20 @@ class Pose:
         marker_rot = marker_info["rot"]  # Grabs MARKER GLOBAL Rotation I set
 
         # SCALE RAW DATA --- based on marker I set scale either x or y 
-        print(f'BEFORE SCALE -- {getattr(event.pose, axis)}')
-        setattr(event.pose, axis, scale_factor(getattr(event.pose, axis)))
+        # print(f'BEFORE SCALE -- {getattr(event.pose, axis)}')
+        setattr(event.pose, axis, scale_factor(getattr(event.pose, axis), marker_name))
 
 
         # Homogenous Transformation + Inverse --> Frame Transformations to get vector pose from marker 
         pos_world = frame_transformation(event, marker_pos, marker_rot)
 
         #LAST SCALE
-        # if model_label == "Circle":  # Because this one is flipped handling negatives would be same if I had a marker in the -y direction
-        #     pos_world[1] = pos_world[1]
-        # elif model_label == "Diamond":
-        #     pos_world[0] = pos_world[0] + 200
-        # elif model_label == "Hexagon":
-        #     pos_world[0] = pos_world[0] - 200
+        if marker_name == "Circle":  # Because this one is flipped handling negatives would be same if I had a marker in the -y direction
+            pos_world[1] = pos_world[1] - 200
+        elif marker_name == "Diamond":
+            pos_world[0] = pos_world[0] + 200
+        elif marker_name == "Hexagon":
+            pos_world[0] = pos_world[0] - 200
 
         
         self.position = np.array([pos_world[0], pos_world[1], pos_world[2]]).reshape(3, 1)

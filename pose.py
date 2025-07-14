@@ -1,131 +1,131 @@
-# 2D GLOBAL POSE OBJECT
 import warnings
 import numpy as np
 import joblib
+import math
+import time
+from utils import quaternion_rotation_matrix, frame_transformation, scale_factor, angle_mean
 
-
-## Loading my non linear regression models from the data I collected on each marker
-scaling_models = joblib.load('pose_calibration_models.pkl')
-
-
-### GOTTEN FROM GEEKS FOR GEEKS
-def quaternion_rotation_matrix(Q):
-    """
-    Convert a quaternion into a full three-dimensional rotation matrix.
-    """
-    q0 = Q.q0
-    q1 = Q.q1
-    q2 = Q.q2
-    q3 = Q.q3
-
-    r00 = 2 * (q0 * q0 + q1 * q1) - 1
-    r01 = 2 * (q1 * q2 - q0 * q3)
-    r02 = 2 * (q1 * q3 + q0 * q2)
-
-    r10 = 2 * (q1 * q2 + q0 * q3)
-    r11 = 2 * (q0 * q0 + q2 * q2) - 1
-    r12 = 2 * (q2 * q3 - q0 * q1)
-
-    r20 = 2 * (q1 * q3 - q0 * q2)
-    r21 = 2 * (q2 * q3 + q0 * q1)
-    r22 = 2 * (q0 * q0 + q3 * q3) - 1
-
-    return np.array([
-        [r00, r01, r02],
-        [r10, r11, r12],
-        [r20, r21, r22]
-    ])
-
-def frame_transformation(obj, marker_pos, marker_rot):
-    ## Build Homogenous Transofrmation Matrix 
-    marker_matrix = np.eye(4)
-    marker_matrix[0:3, 0:3] = marker_rot
-    marker_matrix[0:3, 3:4] = marker_pos
-
-    # Detected Marker
-    R = quaternion_rotation_matrix(obj.pose.rotation)
-    t = np.array([[obj.pose.position.x],
-                [obj.pose.position.y],
-                [obj.pose.position.z]])
-    
-    # Build Homogenous Transformation Matrix of Detection
-    detected_matrix = np.eye(4)
-    detected_matrix[0:3, 0:3] = R  
-    detected_matrix[0:3, 3:4] = t
-
-    # Inverse it
-    inv_detected = np.linalg.inv(detected_matrix)
-
-    # Find pose in global coordinate system
-    global_pose = marker_matrix @ inv_detected
-
-    pos_world = global_pose[0:3, 3]
-
-    return pos_world
-
-#CHATGPT
-def angle_mean(angle1, angle2, alpha):
-    # Convert angles to unit vectors
-    x = alpha * np.cos(angle1) + (1 - alpha) * np.cos(angle2)
-    y = alpha * np.sin(angle1) + (1 - alpha) * np.sin(angle2)
-    return np.arctan2(y, x)
-
-
+# CHATGPT FIx
 class Pose:
-
-    def __init__(self, start_pose, start_yaw):
-        self.position = start_pose
+    def __init__(self, start_pose, start_yaw, robo_pose):
+        self.position = np.array(start_pose, dtype=np.float64).reshape(3, 1)
+        self.dr_pos = np.array(start_pose, dtype=np.float64).reshape(3, 1)
+        self.dr_yaw = start_yaw
+        self.last_robot_pose = None
+        self.last_time = None
+        self.transform = self.dr_frame_transform(robo_pose, start_pose, start_yaw)
         self.start_yaw = start_yaw
-        self.curr_yaw = 0
 
-    def update_pos(self, obj, world):
-        # GET is built into python no need to make function
-        marker_info = world.marker_map.get(obj.archetype.custom_type)  # Check for valid Marker 
+    def get_dr_x(self):
+        return self.dr_pos[0, 0].item()
 
-        if marker_info is None:
-            warnings.warn("Not able to retrieve marker info.", UserWarning)
+    def get_dr_y(self):
+        return self.dr_pos[1, 0].item()
+
+    def get_x(self):
+        return self.position[0, 0].item()
+
+    def get_y(self):
+        return self.position[1, 0].item()
+
+    def dr_frame_transform(self, robo_pose, init_pose, init_yaw):
+        robot_matrix = np.eye(4)
+        robot_matrix[0:3, 0:3] = quaternion_rotation_matrix(robo_pose.rotation)
+        robot_matrix[0:3, 3] = np.array([
+            robo_pose.position.x,
+            robo_pose.position.y,
+            robo_pose.position.z
+        ])
+
+        global_matrix = np.eye(4)
+        global_matrix[0:3, 0:3] = np.array([
+            [math.cos(init_yaw), -math.sin(init_yaw), 0],
+            [math.sin(init_yaw),  math.cos(init_yaw), 0],
+            [0,                   0,                   1]
+        ])
+        global_matrix[0:3, 3] = init_pose
+
+        transform = global_matrix @ np.linalg.inv(robot_matrix)
+        return transform
+
+    def pose_to_matrix(self, pose):
+        mat = np.eye(4)
+        mat[0:3, 0:3] = quaternion_rotation_matrix(pose.rotation)
+        mat[0:3, 3] = np.array([
+            pose.position.x,
+            pose.position.y,
+            pose.position.z
+        ])
+        return mat
+
+    def dead_reckoning_with_gyro(self, curr_pose, robot, dt):
+        if self.last_robot_pose is None or self.last_time is None:
+            self.last_robot_pose = curr_pose
+            self.last_time = time.time()
             return
-        
-        marker_type = marker_info["marker_type"]
-        model_label = marker_info["model_label"]
+
+        # 1. Get position and yaw change from pose
+        curr_global = self.transform @ self.pose_to_matrix(curr_pose)
+        last_global = self.transform @ self.pose_to_matrix(self.last_robot_pose)
+
+        curr_pos = curr_global[0:3, 3]
+        last_pos = last_global[0:3, 3]
+        delta_pos = curr_pos - last_pos
+        distance = np.linalg.norm(delta_pos[0:2])  # only XY plane
+
+        # 2. Integrate gyro yaw (Z-axis angular velocity)
+        # gyro in rad/s, dt in seconds → Δθ = ω * dt
+        gyro_z = robot.gyro.z  # rad/s
+        dtheta = gyro_z * dt
+        self.dr_yaw += dtheta
+
+        # 3. If distance moved is significant, update position
+        movement_threshold = 1e-3
+        if distance > movement_threshold:
+            theta = self.dr_yaw
+            dx = delta_pos[0]
+            dy = delta_pos[1]
+
+            # Rotate motion vector into world frame
+            world_dx = dx * np.cos(theta) - dy * np.sin(theta)
+            world_dy = dx * np.sin(theta) + dy * np.cos(theta)
+
+            self.dr_pos[0] += world_dx
+            self.dr_pos[1] += world_dy
+
+        self.last_robot_pose = curr_pose
+        self.last_time = time.time()
+
+    def extract_yaw(self, matrix):
+        return math.atan2(matrix[1, 0], matrix[0, 0])
+
+    def update_pos(self, event, world, robot):
+        marker_info = world.marker_world.get(event.object_type)
+        marker_name = marker_info["label"]
         axis = marker_info["axis"]
 
+        marker_pos = marker_info["pos"]
+        marker_rot = marker_info["rot"]
 
-        marker_pos = world.marker_world_poses[marker_type]["pos"]  # Grabs MARKER  Global POSE
-        marker_rot = world.marker_world_poses[marker_type]["rot"]  # Grabs MARKER GLOBAL Rotation I set
+        print(f'BEFORE SCALE -- {getattr(event.pose, axis)}')
+        setattr(event.pose, axis, scale_factor(getattr(event.pose, axis), marker_name))
 
-        pos_world = frame_transformation(obj, marker_pos, marker_rot) # Homogenous Transformation + Inverse --> Frame Transformations to get vector pose from marker 
+        pos_world = frame_transformation(event, marker_pos, marker_rot)
 
-        # SCALING 
-        if model_label == "Diamonds2":  # Because this one is flipped handling negatives would be same if I had a marker in the -y direction
-            pos_world[axis] = scaling_models[model_label].predict([[pos_world[axis]]])[0] - 200
-        else:
-            pos_world[axis] = 200 - scaling_models[model_label].predict([[pos_world[axis]]])[0]
+        # Handle axis corrections
+        if marker_name == "Circle":
+            pos_world[1] -= 200
+        elif marker_name == "Diamond":
+            pos_world[0] += 200
+        elif marker_name == "Hexagon":
+            pos_world[0] -= 200
 
-        # Scaled more? 
-        
-        # Update-- Grab 2D pose b/c z remains constant 
-        
-        self.position = np.array([pos_world[0], pos_world[1]])
+        self.position = np.array([pos_world[0], pos_world[1], pos_world[2]]).reshape(3, 1)
 
-        ## REINFORCE
-
-        
-
-
-        print(f'Position --> {self.position}')
-
-
+        print(f'POSITION - {self.position[0], self.position[1]}\n')
         return marker_pos
 
-
     def update_yaw(self, obj, marker_pos, curr_yaw):
-        # Geometry calculating theta
         marker_yaw = np.arctan2(marker_pos[1] - self.position[1], marker_pos[0] - self.position[0])
-
         odometry_yaw = self.start_yaw - curr_yaw
-
-        self.curr_yaw = angle_mean(marker_yaw, odometry_yaw, 0.7).item()  # Bc it returns 1d array 
-
-        
-        return 
+        self.curr_yaw = angle_mean(marker_yaw, odometry_yaw, 0.7).item()

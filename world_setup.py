@@ -46,10 +46,10 @@ class World:
             # CIRCLE
             15: {
                 "pos": np.array([[0.0], [200.0], [0.0]]),
-                "rot": self.rotation_z(90),
+                "rot": self.rotation_z(-90),
                 "label": "Circle",
                 "marker_type": CustomObjectMarkers.Circles2,
-                "axis": "y",
+                "axis": "x",
                 "constant": 1,
             },
             # DIAMOND
@@ -58,7 +58,7 @@ class World:
                 "rot": self.rotation_z(180),
                 "label": "Diamond",
                 "marker_type": CustomObjectMarkers.Diamonds2,
-                "axis": "x",
+                "axis": "y",
                 "constant": 1
             },
             # HEXAGON
@@ -67,8 +67,8 @@ class World:
                 "rot": self.rotation_z(0),
                 "label": "Hexagon",
                 "marker_type": CustomObjectMarkers.Hexagons2,
-                "axis": "x",
-                "constant": -1
+                "axis": "y",
+                "constant": 1
             }
         }
 
