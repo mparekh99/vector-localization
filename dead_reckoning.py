@@ -1,24 +1,17 @@
-
 import numpy as np
-import time 
 import math
-from pose import quaternion_rotation_matrix
+from utils import quaternion_rotation_matrix
 
- # Distance between wheels in mm
-L = (5.87375 - 1.27) * 10 
 
 class DeadReckoning:
-
-    def __init__(self, init_pose, init_yaw, robo_pose):
-        # 3D Position
-        self.position = np.array(init_pose, dtype=np.float64).reshape(3, 1)
-        self.yaw = init_yaw
+    def __init__(self, start_pose, start_yaw, robo_pose):
+        self.dr_pos = np.array(start_pose, dtype=np.float64).reshape(3,1)
+        self.dr_yaw = start_yaw
         self.last_robot_pose = None
-        self.transform = self.frame_transformation(robo_pose, init_pose, init_yaw)
+        self.transform = self.dr_frame_transform(robo_pose, start_pose, start_yaw)
 
-
-    def frame_transformation(self, robo_pose, init_pose, init_yaw):
-        # Robotframe matrix
+    def dr_frame_transform(self, robo_pose, init_pose, init_yaw):
+        
         robot_matrix = np.eye(4)
         robot_matrix[0:3, 0:3] = quaternion_rotation_matrix(robo_pose.rotation)
         robot_matrix[0:3, 3] = np.array([
@@ -41,6 +34,9 @@ class DeadReckoning:
         return transform
     
     def pose_to_matrix(self, pose):
+
+        # print(pose)
+
         mat = np.eye(4)
         mat[0:3, 0:3] = quaternion_rotation_matrix(pose.rotation)
         mat[0:3, 3] = np.array([
@@ -49,24 +45,22 @@ class DeadReckoning:
             pose.position.z
         ])
         return mat
-
-
+    
     def extract_yaw(self, matrix):
         # Extract 2D yaw from rotation matrix
         return math.atan2(matrix[1, 0], matrix[0, 0])
     
+    def reset(self, correct_pos, correct_yaw, robo_pose):
+        self.dr_pos = correct_pos
+        self.dr_yaw = correct_yaw
+        self.last_robot_pose = robo_pose
 
-
-    def update(self, curr_pose):  # CHATPGT
-
+    
+    def update(self, curr_pose):
         if self.last_robot_pose is None:
             self.last_robot_pose = curr_pose
-            return
+            return self.dr_pos, self.dr_yaw
         
-        # print(curr_pose.position.x, curr_pose.position.y, curr_pose.position.z)
-        # print(f'CURRENT YAW --> {self.yaw}')
-
-
         curr_global = self.transform @ self.pose_to_matrix(curr_pose)
         last_global = self.transform @ self.pose_to_matrix(self.last_robot_pose)
 
@@ -80,14 +74,8 @@ class DeadReckoning:
 
 
         # Apply update
-        self.position += delta_pos.reshape(3, 1)
-        self.yaw += dtheta
+        self.dr_pos += delta_pos.reshape(3, 1)
+        self.dr_yaw += dtheta
         self.last_robot_pose = curr_pose
 
-        # print(f"Updated DR: pos={self.position}, yaw={self.yaw:.2f} rad")
-        
-        return 0
-
-    def get_estimated_pose(self):
-        pos = self.position[0:2, 0]
-        return pos, self.yaw
+        return self.dr_pos, self.dr_yaw

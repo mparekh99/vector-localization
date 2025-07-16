@@ -1,6 +1,8 @@
 import numpy as np
 import math
 from quanterion import Quaternion
+from scipy.spatial.transform import Rotation as R
+import numpy as np
 
 
 def is_vector_moving(robot, velocity_threshold=2.0):
@@ -39,38 +41,39 @@ def quaternion_rotation_matrix(Q):
     ])
 
 def frame_transformation(obj, marker_pos, marker_rot):
-    ## Build Homogenous Transofrmation Matrix 
-    marker_matrix = np.eye(4)
-    marker_matrix[0:3, 0:3] = marker_rot
-    marker_matrix[0:3, 3:4] = marker_pos
+
+    # Get global_frame T marker frame 
+    marker_in_global_frame = np.eye(4)
+    marker_in_global_frame[0:3, 0:3] = marker_rot
+    marker_in_global_frame[0:3, 3:4] = marker_pos
+
 
     quanterion = Quaternion(obj.pose.q0, obj.pose.q1, obj.pose.q2, obj.pose.q3) 
+    R_cam = quaternion_rotation_matrix(quanterion)
+    t_cam = np.array([[obj.pose.x],
+                    [obj.pose.y],
+                    [obj.pose.z]])
     
-    # print(obj.pose)
+    marker_in_camera_frame = np.eye(4)
+    marker_in_camera_frame[0:3, 0:3] = R_cam
+    marker_in_camera_frame[0:3, 3:4] = t_cam
 
-    # Detected Marker
-    R = quaternion_rotation_matrix(quanterion)
-    t = np.array([[obj.pose.x],
-                [obj.pose.y],
-                [obj.pose.z]])
-    
+    # Step 1: Marker in robot frame
+    marker_in_robot = np.linalg.inv(marker_in_camera_frame)
 
-    # print(f'ROTATION--> {R} POSITION --> {t}')
-    # Build Homogenous Transformation Matrix of Detection
-    detected_matrix = np.eye(4)
-    detected_matrix[0:3, 0:3] = R  
-    detected_matrix[0:3, 3:4] = t
+    # print(f' MARKER IN ROBOT -> {marker_in_robot[0:3, 3:4]}\n')
 
-    # Inverse it
-    inv_detected = np.linalg.inv(detected_matrix)
+    # Step 3: Get robot in global frame
+    robot_in_global = marker_in_global_frame @ marker_in_robot
 
-    # Find pose in global coordinate system
-    global_pose = marker_matrix @ inv_detected
+    pos_world = robot_in_global[0:3, 3:4]
 
-    pos_world = global_pose[0:3, 3]
-    
+
+    # print(f'CALCULATED POSE {pos_world}\n')
 
     return pos_world
+
+
 
 #CHATGPT
 def angle_mean(angle1, angle2, alpha):

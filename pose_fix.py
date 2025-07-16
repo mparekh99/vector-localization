@@ -8,7 +8,6 @@ from utils import quaternion_rotation_matrix, frame_transformation, scale_factor
 
 #TODO FIX DEAD RECKONING -- HAS TO DO WITH ICC 
 
-# TODO ADD DEADRECKONING WITHIN CLASS
 class Pose:
 
     def __init__(self, start_pose, start_yaw, robo_pose):
@@ -18,9 +17,14 @@ class Pose:
         self.last_robot_pose = None
         self.transform = self.dr_frame_transform(robo_pose, start_pose, start_yaw)
         self.start_yaw = start_yaw
-        # self.position = start_pose
-        # self.start_yaw = start_yaw
-        # self.curr_yaw = 0
+        self.last_observed_marker = "Circle"
+
+    def new_marker_observed(self, marker_name):
+        if self.last_observed_marker != marker_name:
+            self.last_observed_marker = marker_name
+            return True
+        
+        return False
 
     def get_dr_x(self):
         return self.dr_pos[0, 0].item()
@@ -134,6 +138,7 @@ class Pose:
 
         
         self.position = np.array([pos_world[0], pos_world[1], pos_world[2]]).reshape(3, 1)
+        # self.last_observed_marker = marker_name
 
         print(f'POSITION - {self.position[0], self.position[1]}\n')
 
@@ -142,7 +147,7 @@ class Pose:
 
 
 
-    def update_yaw(self, obj, marker_pos, curr_yaw):
+    def update_yaw(self, marker_pos, curr_yaw):
         # Geometry calculating theta
         marker_yaw = np.arctan2(marker_pos[1] - self.position[1], marker_pos[0] - self.position[0])
 
