@@ -75,19 +75,18 @@ def main():
         start_yaw = math.pi / 2
         pose_tracker = PoseTracker(start_pose, start_yaw, robot.pose, world)
 
-        def on_robot_observed(robot, event_type, event):
-            marker_name = world.marker_world.get(event.object_type)["label"]
-            
+        # def on_robot_observed(robot, event_type, event):
+        #     marker_name = world.marker_world.get(event.object_type)["label"]
 
-            # pose_tracker.update_from_marker(event, robot.pose)
+        #     pose_tracker.update_from_marker(event, robot.pose)
 
-            if pose_tracker.new_marker_observed(marker_name):
-                pose_tracker.update_from_marker(event, robot.pose)
-            else:
-                pose_tracker.update_from_moving(robot.pose)
+        #     # if pose_tracker.new_marker_observed(marker_name):
+        #     #     pose_tracker.update_from_marker(event, robot.pose)
+        #     # else:
+        #     #     pose_tracker.update_from_moving(robot.pose)
 
 
-        robot.events.subscribe(on_robot_observed, Events.robot_observed_object)
+        # robot.events.subscribe(on_robot_observed, Events.robot_observed_object)
 
         # Start teleop thread
         listener_thread = threading.Thread(target=teleop_listener, daemon=True)

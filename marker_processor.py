@@ -1,6 +1,8 @@
 import math
 import numpy as np
 from utils import scale_factor, frame_transformation
+import csv
+import os
 
 
 class MarkerProcessor:
@@ -16,11 +18,26 @@ class MarkerProcessor:
         marker_pos = marker_info["pos"]  # Grabs MARKER  Global POSE
         marker_rot = marker_info["rot"]  # Grabs MARKER GLOBAL Rotation I set
 
+        raw_value = getattr(event.pose, axis)
+        print(f'CHANGING POSE -> {raw_value}\n')
+
         # SCALE RAW DATA --- based on marker I set scale either x or y 
         # print(f'BEFORE SCALE -- {getattr(event.pose, axis)}')
         setattr(event.pose, axis, scale_factor(getattr(event.pose, axis), marker_name))
 
-        print(f'MARKER SCALED POSE -> {event.pose.x, event.pose.y, event.pose.z}\n')
+        scaled_value = getattr(event.pose, axis)
+        print(f'MARKER SCALED POSE -> {scaled_value}\n')
+
+        csv_filename = f"{marker_name}.csv"
+
+        # Ensure the file exists with a header
+        file_exists = os.path.isfile(csv_filename)
+
+        with open(csv_filename, mode='a', newline='') as file:
+            writer = csv.writer(file)
+            if not file_exists:
+                writer.writerow(['sensor_reading'])  # Add more headers if needed
+            writer.writerow([raw_value])
 
 
         # Homogenous Transformation + Inverse --> Frame Transformations to get vector pose from marker 
@@ -37,7 +54,7 @@ class MarkerProcessor:
         position = np.array([pos_world[0], pos_world[1], pos_world[2]]).reshape(3, 1)
         # self.last_observed_marker = marker_name
 
-        print(f'POSITION - {position[0], position[1]}\n')
+        # print(f'POSITION - {position[0], position[1]}\n')
 
         # Geometry calculating theta
         marker_yaw = np.arctan2(marker_pos[1] - position[1], marker_pos[0] - position[0])
