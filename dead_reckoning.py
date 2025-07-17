@@ -2,6 +2,8 @@ import numpy as np
 import math
 from utils import quaternion_rotation_matrix
 
+# ODOMETRY MOTION MODEL
+
 
 class DeadReckoning:
     def __init__(self, start_pose, start_yaw, robo_pose):
@@ -39,6 +41,10 @@ class DeadReckoning:
 
         mat = np.eye(4)
         mat[0:3, 0:3] = quaternion_rotation_matrix(pose.rotation)
+        # roll,pitch,yaw = self.roll_pitch_yaw(mat[0:3, 0:3])
+
+        # print(f'ROLL {roll} PITCH {pitch} YAW {yaw} \n')
+
         mat[0:3, 3] = np.array([
             pose.position.x,
             pose.position.y,
@@ -55,29 +61,57 @@ class DeadReckoning:
         self.dr_yaw = correct_yaw
         self.last_robot_pose = robo_pose
 
+    def roll_pitch_yaw(self, R): # Give back in radians YAW is on Z axis
+        beta = np.arcsin(-R[1, 2])
+        alpha = np.arctan2(R[0, 2], R[2, 2])
+        gamma = np.arctan2(R[1, 0], R[1, 1])
+
+        return gamma
     
-    def update(self, curr_pose):
+     # https://www.youtube.com/watch?v=LrsTBWf6Wsc
+    
+    def update(self, robot, dt):
+
         if self.last_robot_pose is None:
-            self.last_robot_pose = curr_pose
+            self.last_robot_pose = robot.pose
             return self.dr_pos, self.dr_yaw
+
+        curr_matrix = self.pose_to_matrix(robot.pose)
+
+        curr_yaw = self.roll_pitch_yaw(curr_matrix[0:3, 0:3])
+
+        print(f"[Robot Pose] Yaw from transform = {curr_yaw:.4f} rad ({np.degrees(curr_yaw):.2f}°)\n")
         
-        curr_global = self.transform @ self.pose_to_matrix(curr_pose)
+
+        curr_global = self.transform @ curr_matrix
         last_global = self.transform @ self.pose_to_matrix(self.last_robot_pose)
+        # curr_yaw = self.roll_pitch_yaw(curr_global[0:3, 0:3])
 
-        curr_pos = curr_global[0:3, 3]
-        last_pos = last_global[0:3, 3]
-        delta_pos = curr_pos - last_pos
+        # CONSTANTS 
+        r = 12.7  # mm -- wheel radius 
+        R_w = 60.375  # mm distance between wheel and center refrence point
+        # x, y, theta
 
+        v_l = robot.left_wheel_speed_mmps
+        v_r = robot.right_wheel_speed_mmps
+
+        v = (v_l + v_r) / 2  # Give me velocity
+
+        # ONLY USING YAW becuase i'm rotating only in z axis 
+
+        x_hat = v * np.cos(curr_yaw) * dt
+        y_hat = v * np.sin(curr_yaw) * dt
         curr_yaw = self.extract_yaw(curr_global)
         last_yaw = self.extract_yaw(last_global)
         dtheta = curr_yaw - last_yaw
+        # theta_hat = ((v_r - v_l)) / (2 * R_w) * dt
 
-
-        # Apply update
-        self.dr_pos += delta_pos.reshape(3, 1)
+        # UPDATE
+        self.dr_pos[0] += x_hat
+        self.dr_pos[1] += y_hat
         self.dr_yaw += dtheta
-        self.last_robot_pose = curr_pose
+        self.last_robot_pose = robot.pose
+
+        print(f'POSITION -> {self.dr_pos}, YAW: {self.dr_yaw}')
 
         return self.dr_pos, self.dr_yaw
-    
-    # https://www.youtube.com/watch?v=LrsTBWf6Wsc

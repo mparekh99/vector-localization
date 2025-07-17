@@ -95,10 +95,10 @@ def main():
         while True:
             # # Update dead reckoning
             # print(robot.pose.quaternion)
-            pose_tracker.update_from_moving(robot.pose)
+            pose_tracker.update_from_moving(robot)
 
 
-            # # #Plot
+            # #Plot
             plot_scene(ax, pose_tracker, world)
             plt.draw()
             plt.pause(0.1)
