@@ -19,25 +19,25 @@ class MarkerProcessor:
         marker_rot = marker_info["rot"]  # Grabs MARKER GLOBAL Rotation I set
 
         raw_value = getattr(event.pose, axis)
-        print(f'CHANGING POSE -> {raw_value}\n')
+        print(f'RAW READING -> {raw_value}\n')
 
         # SCALE RAW DATA --- based on marker I set scale either x or y 
         # print(f'BEFORE SCALE -- {getattr(event.pose, axis)}')
         setattr(event.pose, axis, scale_factor(getattr(event.pose, axis), marker_name))
 
-        scaled_value = getattr(event.pose, axis)
-        print(f'MARKER SCALED POSE -> {scaled_value}\n')
+        # scaled_value = getattr(event.pose, axis)
+        # print(f'MARKER SCALED POSE -> {scaled_value}\n')
 
-        csv_filename = f"{marker_name}.csv"
+        # csv_filename = f"{marker_name}.csv"
 
-        # Ensure the file exists with a header
-        file_exists = os.path.isfile(csv_filename)
+        # # Ensure the file exists with a header
+        # file_exists = os.path.isfile(csv_filename)
 
-        with open(csv_filename, mode='a', newline='') as file:
-            writer = csv.writer(file)
-            if not file_exists:
-                writer.writerow(['sensor_reading'])  # Add more headers if needed
-            writer.writerow([raw_value])
+        # with open(csv_filename, mode='a', newline='') as file:
+        #     writer = csv.writer(file)
+        #     if not file_exists:
+        #         writer.writerow(['sensor_reading'])  # Add more headers if needed
+        #     writer.writerow([raw_value])
 
 
         # Homogenous Transformation + Inverse --> Frame Transformations to get vector pose from marker 

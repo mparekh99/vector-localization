@@ -61,7 +61,7 @@ def frame_transformation(obj, marker_pos, marker_rot):
     # Step 1: Marker in robot frame
     marker_in_robot = np.linalg.inv(marker_in_camera_frame)
 
-    # print(f' MARKER IN ROBOT -> {marker_in_robot[0:3, 3:4]}\n')
+    # print(f' RAW READING  -> {marker_in_robot[0:3, 3:4]}\n')
 
     # Step 3: Get robot in global frame
     robot_in_global = marker_in_global_frame @ marker_in_robot

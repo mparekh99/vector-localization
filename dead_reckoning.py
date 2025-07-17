@@ -78,14 +78,14 @@ class DeadReckoning:
 
         curr_matrix = self.pose_to_matrix(robot.pose)
 
-        curr_yaw = self.roll_pitch_yaw(curr_matrix[0:3, 0:3])
+        # curr_yaw = self.roll_pitch_yaw(curr_matrix[0:3, 0:3])
 
-        print(f"[Robot Pose] Yaw from transform = {curr_yaw:.4f} rad ({np.degrees(curr_yaw):.2f}°)\n")
+        # print(f"[Robot Pose] Yaw from transform = {curr_yaw:.4f} rad ({np.degrees(curr_yaw):.2f}°)\n")
         
 
         curr_global = self.transform @ curr_matrix
         last_global = self.transform @ self.pose_to_matrix(self.last_robot_pose)
-        # curr_yaw = self.roll_pitch_yaw(curr_global[0:3, 0:3])
+        curr_yaw = self.roll_pitch_yaw(curr_global[0:3, 0:3])
 
         # CONSTANTS 
         r = 12.7  # mm -- wheel radius 
@@ -104,14 +104,25 @@ class DeadReckoning:
         curr_yaw = self.extract_yaw(curr_global)
         last_yaw = self.extract_yaw(last_global)
         dtheta = curr_yaw - last_yaw
+
+        # curr_pos = curr_global[0:3, 3]
+        # last_pos = last_global[0:3, 3]
+        # delta_pos = curr_pos - last_pos
         # theta_hat = ((v_r - v_l)) / (2 * R_w) * dt
 
         # UPDATE
         self.dr_pos[0] += x_hat
         self.dr_pos[1] += y_hat
+
         self.dr_yaw += dtheta
+
+        # self.dr_pos += delta_pos.reshape(3, 1)
         self.last_robot_pose = robot.pose
 
         print(f'POSITION -> {self.dr_pos}, YAW: {self.dr_yaw}')
 
         return self.dr_pos, self.dr_yaw
+    
+
+# https://ursinusgraphics.github.io/RollPitchYaw/
+
