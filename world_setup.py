@@ -17,24 +17,73 @@ class World:
     def define_markers(self):
         self.robot.vision.enable_custom_object_detection(True)
 
-        self.robot.world.define_custom_cube(CustomObjectTypes.CustomType00,
-                                            marker=CustomObjectMarkers.Circles2,
-                                            size_mm=25.4,
-                                            marker_width_mm=25.4,
-                                            marker_height_mm=25.4)
+        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType00,
+        #                                     marker=CustomObjectMarkers.Circles2,
+        #                                     size_mm=25.4,
+        #                                     marker_width_mm=25.4,
+        #                                     marker_height_mm=25.4)
 
-        self.robot.world.define_custom_cube(CustomObjectTypes.CustomType01,
-                                            marker=CustomObjectMarkers.Diamonds2,
-                                            size_mm=25.4,
-                                            marker_width_mm=25.4,
-                                            marker_height_mm=25.4)
+        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType01,
+        #                                     marker=CustomObjectMarkers.Diamonds2,
+        #                                     size_mm=25.4,
+        #                                     marker_width_mm=25.4,
+        #                                     marker_height_mm=25.4)
 
-        self.robot.world.define_custom_cube(CustomObjectTypes.CustomType02,
-                                            marker=CustomObjectMarkers.Hexagons2,
+        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType02,
+        #                                     marker=CustomObjectMarkers.Hexagons2,
+        #                                     size_mm=25.4,
+        #                                     marker_width_mm=25.4,
+        #                                     marker_height_mm=25.4)
+        
+        # ### FOR TESTING 
+        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType03,
+        #                                     marker=CustomObjectMarkers.Hexagons5,
+        #                                     size_mm=25.4,
+        #                                     marker_width_mm=25.4,
+        #                                     marker_height_mm=25.4)
+            
+        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType04,
+        #                                     marker=CustomObjectMarkers.Hexagons3,
+        #                                     size_mm=25.4,
+        #                                     marker_width_mm=25.4,
+        #                                     marker_height_mm=25.4)
+        
+        self.robot.world.define_custom_cube(CustomObjectTypes.CustomType05,
+                                            marker=CustomObjectMarkers.Triangles3,
                                             size_mm=25.4,
                                             marker_width_mm=25.4,
                                             marker_height_mm=25.4)
         
+        self.robot.world.define_custom_cube(CustomObjectTypes.CustomType06,
+                                            marker=CustomObjectMarkers.Triangles5,
+                                            size_mm=25.4,
+                                            marker_width_mm=25.4,
+                                            marker_height_mm=25.4)
+        
+        self.robot.world.define_custom_cube(CustomObjectTypes.CustomType07,
+                                            marker=CustomObjectMarkers.Diamonds4,
+                                            size_mm=25.4,
+                                            marker_width_mm=25.4,
+                                            marker_height_mm=25.4)
+    
+        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType07,
+        #                                     marker=CustomObjectMarkers.Diamonds5,
+        #                                     size_mm=25.4,
+        #                                     marker_width_mm=25.4,
+        #                                     marker_height_mm=25.4)
+        
+        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType08,
+        #                                     marker=CustomObjectMarkers.Circles5,
+        #                                     size_mm=25.4,
+        #                                     marker_width_mm=25.4,
+        #                                     marker_height_mm=25.4)
+        
+        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType09,
+        #                                     marker=CustomObjectMarkers.Triangles2,
+        #                                     size_mm=25.4,
+        #                                     marker_width_mm=25.4,
+        #                                     marker_height_mm=25.4)
+            
     def set_head_and_lift(self):
         self.robot.behavior.set_head_angle(degrees(7.0))
         self.robot.behavior.set_lift_height(0.0)
@@ -43,32 +92,26 @@ class World:
     def define_marker_world(self): 
         
         return {
-            # CIRCLE
-            15: {
-                "pos": np.array([[0.0], [200.0], [0.0]]),
-                "rot": self.rotation_z(-90),
-                "label": "Circle",
-                "marker_type": CustomObjectMarkers.Circles2,
-                "axis": "x",
-                "constant": 1,
-            },
-            # DIAMOND
-            16: {
+            # Diamonds4
+            22: {
                 "pos": np.array([[-200.0], [0.0], [0.0]]),
-                "rot": self.rotation_z(180),
-                "label": "Diamond",
-                "marker_type": CustomObjectMarkers.Diamonds2,
-                "axis": "y",
-                "constant": 1
+                "rot": self.rotation_z(90), # was -90
+                "label": "Front",
+                "axis": "x",
             },
-            # HEXAGON
-            17: {
-                "pos": np.array([[200.0], [0.0], [0.0]]),
-                "rot": self.rotation_z(0),
-                "label": "Hexagon",
-                "marker_type": CustomObjectMarkers.Hexagons2,
+            # Triangles5
+            21: {
+                "pos": np.array([[0.0], [200.0], [0.0]]),
+                "rot": self.rotation_z(-90), # was be 90
+                "label": "Left",
                 "axis": "y",
-                "constant": 1
+            },
+            # Triangles3
+            20: {
+                "pos": np.array([[200.0], [0.0], [0.0]]),
+                "rot": self.rotation_z(90), # was 90
+                "label": "Right",
+                "axis": "y",
             }
         }
 

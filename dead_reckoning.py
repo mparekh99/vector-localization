@@ -64,7 +64,7 @@ class DeadReckoning:
     def roll_pitch_yaw(self, R): # Give back in radians YAW is on Z axis
         beta = np.arcsin(-R[1, 2])
         alpha = np.arctan2(R[0, 2], R[2, 2])
-        gamma = np.arctan2(R[1, 0], R[1, 1])
+        gamma = np.arctan2(R[1, 0], R[0, 0])
 
         return gamma
     
@@ -119,7 +119,7 @@ class DeadReckoning:
         # self.dr_pos += delta_pos.reshape(3, 1)
         self.last_robot_pose = robot.pose
 
-        print(f'POSITION -> {self.dr_pos}, YAW: {self.dr_yaw}')
+        # print(f'POSITION -> {self.dr_pos}, YAW: {self.dr_yaw}')
 
         return self.dr_pos, self.dr_yaw
     

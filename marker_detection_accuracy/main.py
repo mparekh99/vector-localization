@@ -3,21 +3,23 @@ import threading
 import time
 import matplotlib.pyplot as plt
 from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
-from world_setup import World
 import numpy as np
 import keyboard
 import math
 from anki_vector.events import Events
 import csv
-from pose_tracker import PoseTracker
 import os
+
+
+import sys
+import os
+
+# Add parent directory to path
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
+
+from world_setup import World
+from pose_tracker import PoseTracker
 from utils import frame_transformation
-
-
-#SCALE FACTOR Computed in Transform Accuracy
-scale_factors = {"Front": 0.003010,
-                 "Left": 0.002019, 
-                 "Right": 0.002789}
 
 
 #CHATGPT
@@ -74,9 +76,9 @@ def plot_scene(ax, pose, world):
 
 
 def main():
-    with anki_vector.Robot("006068a2") as robot:
-        plt.ion()
-        fig, ax = plt.subplots()
+    with anki_vector.Robot("006068a2", show_viewer=True) as robot:
+        # plt.ion()
+        # fig, ax = plt.subplots()
 
         world = World(robot)
         start_pose = [0, 0, 0]
@@ -85,13 +87,61 @@ def main():
 
         def on_robot_observed(robot, event_type, event):
 
-            marker_info = world.marker_world.get(event.object_type)
-            marker_name = marker_info["label"]
+            # marker_info = world.marker_world.get(event.object_type)
+            # marker_name = marker_info["label"]
+            # axis = marker_info["axis"]
+
+            # marker_pos = marker_info["pos"]  # Grabs MARKER  Global POSE
+            # marker_rot = marker_info["rot"]  # Grabs MARKER GLOBAL Rotation I set
+
+            # pos_world = frame_transformation(event, marker_pos, marker_rot)
+
+            raw_value = np.array([event.pose.x, event.pose.y]).flatten()
+
+            csv_dir = r"C:\Users\mihpa\swarm\flocking\companion_cube\marker_detection_accuracy\data"
+            os.makedirs(csv_dir, exist_ok=True)
+
+            csv_filename = os.path.join(csv_dir, f"Triangle2_RAW.csv")
+
+            file_exists = os.path.isfile(csv_filename)
+
+            # Open in append mode and write header if creating
+            with open(csv_filename, mode='a', newline='') as file:
+                writer = csv.writer(file)
+                if not file_exists:
+                    writer.writerow(['RAW_X', 'RAW_Y', 'TRUE_X', 'TRUE_Y'])
+                writer.writerow([
+                    raw_value[0],
+                    raw_value[1],
+                    pose_tracker.get_x(),
+                    pose_tracker.get_y()
+                ])
+
+
+
+            # Circle: shifted average RAW_X = 0.609, RAW_Y = 457.704
+            # Diamond: shifted average RAW_X = -145.234, RAW_Y = -282.104
+            # Hexagon: shifted average RAW_X = 189.885, RAW_Y = -284.601
+
+            # if marker_name == "Circle":  # Because this one is flipped handling negatives would be same if I had a marker in the -y direction
+            #     pos_world[0] = pos_world[0] - 0.609
+            #     pos_world[1] = pos_world[1] - 457.704
+            # elif marker_name == "Diamond":
+            #     pos_world[0] = pos_world[0] + 145.234
+            #     pos_world[1] = pos_world[1] + 282.104
+            # elif marker_name == "Hexagon":
+            #     pos_world[0] = pos_world[0] - 189.885
+            #     pos_world[1] = pos_world[1] + 284.601
+
+
+            # print(f'{pos_world[0], pos_world[1], pos_world[2]}')
+
+                
 
             # pose_tracker.update_from_marker(event, robot.pose)
 
-            if pose_tracker.new_marker_observed(marker_name):
-                pose_tracker.update_from_marker(event, robot.pose)
+            # if pose_tracker.new_marker_observed(marker_name):
+            #     pose_tracker.update_from_marker(event, robot.pose)
             # else:
             #     pose_tracker.update_from_moving(robot.pose)
 
@@ -105,13 +155,13 @@ def main():
         while True:
             # # Update dead reckoning
             # print(robot.pose.quaternion)
-            pose_tracker.update_from_moving(robot)
+            # pose_tracker.update_from_moving(robot)
 
 
             # #Plot
-            plot_scene(ax, pose_tracker, world)
-            plt.draw()
-            plt.pause(0.1)
+            # plot_scene(ax, pose_tracker, world)
+            # plt.draw()
+            # plt.pause(0.1)
 
             # Teleop
             if control_state["forward"]:

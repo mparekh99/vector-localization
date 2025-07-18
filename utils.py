@@ -4,6 +4,12 @@ from quanterion import Quaternion
 from scipy.spatial.transform import Rotation as R
 import numpy as np
 
+#SCALE FACTOR Computed in Transform Accuracy
+scale_factors = {"Front": [175.6957, 282.0064],
+                 "Left": [53.3123, -492.5995],
+                 "Right": [-198.9670, 298.3165]}
+
+
 
 def is_vector_moving(robot, velocity_threshold=2.0):
     left_speed = robot.left_wheel_speed_mmps
@@ -68,10 +74,11 @@ def frame_transformation(obj, marker_pos, marker_rot):
 
     pos_world = robot_in_global[0:3, 3:4]
 
-
+    # Yaw 
+    yaw = math.atan2(robot_in_global[1, 0], robot_in_global[0, 0])
     # print(f'CALCULATED POSE {pos_world}\n')
 
-    return pos_world
+    return pos_world, yaw
 
 
 
@@ -83,18 +90,5 @@ def angle_mean(angle1, angle2, alpha):
     return np.arctan2(y, x)
 
 # Scaling function 
-def scale_factor(raw, marker_name):
-
-    y = 0
-    if marker_name == "Circle":
-        y = -5.8458 * raw + 1590.7008
-    elif marker_name == "Diamond":
-        y = 6.6093 * raw - 1986.9060
-    elif marker_name == "Hexagon":
-        y = 5.6176 * raw + 1654.8487
-
-# Model: true = -3.8178 * raw + 1058.5996
-# Model: true = 6.1470 * raw + -1829.8999
-# Model: true = 5.2695 * raw + 1607.5901
-
-    return y
+def scale_transform_point(x, y, marker):
+    return x + scale_factors[marker][0], y + scale_factors[marker][1]

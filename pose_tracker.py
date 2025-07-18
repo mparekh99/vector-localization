@@ -32,6 +32,7 @@ class PoseTracker:
     
     def update_from_marker(self, event, robo_pose):
         global_pos, global_yaw = self.marker_processor.process_marker(event)
+        #UNCOMMET TO WORK
         if global_pos is not None:
             self.position = global_pos
             self.yaw = global_yaw
