@@ -31,19 +31,20 @@ class PoseTracker:
         self.yaw = yaw
     
     def update_from_marker(self, event, robo_pose):
-        global_pos, global_yaw = self.marker_processor.process_marker(event)
-        #UNCOMMET TO WORK
+        global_pos = self.marker_processor.process_marker(event, robo_pose)
+        # UNCOMMET TO WORK
         if global_pos is not None:
             self.position = global_pos
-            self.yaw = global_yaw
-            self.dead_reckoning.reset(global_pos, global_yaw, robo_pose)
-            # MAYBE UPDATE YAW -- TEST AND SEE
+        #     self.yaw = global_yaw
+            self.dead_reckoning.reset(global_pos, robo_pose)
+        #     MAYBE UPDATE YAW -- TEST AND SEE
+        return global_pos
         
     def get_x(self):
-        return self.position[0, 0].item()
+        return self.position[0].item()
     
     def get_y(self):
-        return self.position[1, 0].item()
+        return self.position[1].item()
     
     def get_yaw(self):
         return self.yaw

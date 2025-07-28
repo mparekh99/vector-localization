@@ -56,9 +56,9 @@ class DeadReckoning:
         # Extract 2D yaw from rotation matrix
         return math.atan2(matrix[1, 0], matrix[0, 0])
     
-    def reset(self, correct_pos, correct_yaw, robo_pose):
+    def reset(self, correct_pos, robo_pose):
+        print("OOOOHOHOHOOHO")
         self.dr_pos = correct_pos
-        self.dr_yaw = correct_yaw
         self.last_robot_pose = robo_pose
 
     def roll_pitch_yaw(self, R): # Give back in radians YAW is on Z axis
