@@ -2,6 +2,8 @@ import anki_vector
 from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
 from anki_vector.util import degrees
 import numpy as np
+from scipy.spatial.transform import Rotation as R
+
 
 class World:
     
@@ -94,24 +96,24 @@ class World:
         return {
             # Diamonds4
             22: {
-                "pos": np.array([[-200.0], [0.0], [0.0]]),
-                "rot": self.rotation_z(90), # was -90
+                "pos": np.array([[0.0], [200.0], [50.0]]),
                 "label": "Front",
-                "axis": "x",
+                "axis": 1,
+                "translation": 77
             },
             # Triangles5
             21: {
-                "pos": np.array([[0.0], [200.0], [0.0]]),
-                "rot": self.rotation_z(-90), # was be 90
+                "pos": np.array([[-200.0], [0.0], [50.0]]),
                 "label": "Left",
-                "axis": "y",
+                "axis": 0,
+                "translation": -77
             },
             # Triangles3
             20: {
-                "pos": np.array([[200.0], [0.0], [0.0]]),
-                "rot": self.rotation_z(90), # was 90
+                "pos": np.array([[200.0], [0.0], [50.0]]),
                 "label": "Right",
-                "axis": "y",
+                "axis": 0,
+                "translation": 77
             }
         }
 
@@ -123,6 +125,22 @@ class World:
             [np.cos(theta), -np.sin(theta), 0],
             [np.sin(theta),  np.cos(theta), 0],
             [0,              0,             1]
+        ])
+    @staticmethod
+    def rotation_y(degrees_angle):
+        theta = np.radians(degrees_angle)
+        return np.array([
+            [np.cos(theta), 0, np.sin(theta)],
+            [0,             1,             0],
+            [-np.sin(theta),0, np.cos(theta)]
+        ])
+    @staticmethod
+    def rotation_x(degrees_angle):
+        theta = np.radians(degrees_angle)
+        return np.array([
+            [1,              0,             0]
+            [0, np.cos(theta), -np.sin(theta)],
+            [0, np.sin(theta),  np.cos(theta)],
         ])
 
 
