@@ -57,7 +57,7 @@ class DeadReckoning:
         return math.atan2(matrix[1, 0], matrix[0, 0])
     
     def reset(self, correct_pos, robo_pose):
-        print("OOOOHOHOHOOHO")
+        # print("OOOOHOHOHOOHO")
         self.dr_pos = correct_pos
         self.last_robot_pose = robo_pose
 

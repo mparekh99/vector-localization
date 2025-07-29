@@ -68,7 +68,7 @@ def plot_scene(ax, pose, world):
 
 
 def main():
-    with anki_vector.Robot("00706c20") as robot:
+    with anki_vector.Robot("006068a2") as robot:
         plt.ion()
         fig, ax = plt.subplots()
 
