@@ -4,11 +4,6 @@ from quanterion import Quaternion
 from scipy.spatial.transform import Rotation as R
 import numpy as np
 
-#SCALE FACTOR Computed in Transform Accuracy
-scale_factors = {"Front": [175.6957, 282.0064],
-                 "Left": [53.3123, -492.5995],
-                 "Right": [-198.9670, 298.3165]}
-
 
 def rotation_z(theta):
     # theta = np.radians(degrees_angle)
@@ -102,31 +97,6 @@ def frame_transformation(obj, marker_pos, marker_rot):
 
     displacement_vector = marker_pos - t_camera_in_global 
 
-    # print("Displacment Vector: ", displacement_vector)
-    # print("GLOBAL POS: ", R_camera_in_global)
-
-    
-    # print(f'RAW READING {position_reading}\n')
-
-    # T_marker_in_camera = np.eye(4)
-    # T_marker_in_camera[:3, :3] = rotation_reading
-    # T_marker_in_camera[:3, 3] = position_reading.flatten()
-
-    # inv = np.linalg.inv(T_marker_in_camera)
-
-    # # --- Compute camera pose in global frame ---
-    # T_camera_in_global = marker_in_global_frame @ inv
-
-    # # --- Extract final camera pose ---
-    # R_camera_in_global = T_camera_in_global[:3, :3]
-    # t_camera_in_global = T_camera_in_global[:3, 3]
-
-
-    # print("POSITION")
-    # print(t_camera_in_global)
-    # print("ROT")
-    # print(R_camera_in_global)
-
     # Yaw 
     yaw = math.atan2(R_camera_in_global[0, 1], R_camera_in_global[0, 0])
     # print(f'CALCULATED POSE {pos_world}\n')
@@ -141,7 +111,3 @@ def angle_mean(angle1, angle2, alpha):
     x = alpha * np.cos(angle1) + (1 - alpha) * np.cos(angle2)
     y = alpha * np.sin(angle1) + (1 - alpha) * np.sin(angle2)
     return np.arctan2(y, x)
-
-# Scaling function 
-def scale_transform_point(x, y, marker):
-    return x + scale_factors[marker][0], y + scale_factors[marker][1]
