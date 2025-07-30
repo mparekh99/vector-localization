@@ -12,6 +12,7 @@ import csv
 from pose_tracker import PoseTracker
 import os
 from utils import frame_transformation
+from quanterion import Quaternion
 
 
 #CHATGPT
@@ -58,14 +59,14 @@ def plot_scene(ax, pose, world):
     ax.plot(x, y, 'bo')
     ax.text(x + 5, y + 5, "Vector", color='blue')
 
-    length = 30
+    length = 100
 
     dx = length * math.cos(pose.get_yaw())
     dy = length * math.sin(pose.get_yaw())
 
     # print(f'{x} -- {y} -- {dx} -- {dy}')
 
-    ax.arrow(x, y, dx, dy, head_width=10, head_length=10, fc='blue', ec='blue')
+    ax.arrow(x, y, dx, dy, head_width=50, head_length=50, fc='blue', ec='blue')
 
 
 def main():
@@ -81,7 +82,7 @@ def main():
         pose_tracker = PoseTracker(start_pose, start_yaw, robot.pose, world)
 
         def on_robot_observed(robot, event_type, event):
-            # print("HELLo")
+            print("\n")
             # print(f"Event received: {event.object_type}")
 
             pose_tracker.update_from_marker(event, robot.pose)
@@ -101,8 +102,8 @@ def main():
         while True:
             # # Update dead reckoning
             # print(robot.pose.quaternion)
-            pose_tracker.update_from_moving(robot)
-            # print("ROBOT POSE", robot.pose)
+            # pose_tracker.update_from_moving(robot)
+
 
             # #Plot
             plot_scene(ax, pose_tracker, world)

@@ -7,7 +7,7 @@ import time
 class PoseTracker:
     def __init__(self, start_pose, start_yaw, init_robot_pose, world):
         self.kalman = None ## WILL CHANGE WHEN I GET TO KALMAN 
-        self.dead_reckoning = DeadReckoning(start_pose, start_yaw, init_robot_pose)
+        self.dead_reckoning = DeadReckoning(start_pose, start_yaw)
         self.marker_processor = MarkerProcessor(world)
         self.position = np.array(start_pose, dtype=np.float64).reshape(3, 1)
         self.yaw = start_yaw
@@ -31,12 +31,13 @@ class PoseTracker:
         self.yaw = yaw
     
     def update_from_marker(self, event, robo_pose):
-        global_pos = self.marker_processor.process_marker(event, robo_pose)
+        global_pos, global_yaw = self.marker_processor.process_marker(event, robo_pose)
         # UNCOMMET TO WORK
         if global_pos is not None:
             self.position = global_pos
+            self.yaw = global_yaw
         #     self.yaw = global_yaw
-            self.dead_reckoning.reset(global_pos, robo_pose)
+            self.dead_reckoning.reset(global_pos, global_yaw)
         #     MAYBE UPDATE YAW -- TEST AND SEE
         return global_pos
         
