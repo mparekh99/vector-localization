@@ -22,6 +22,7 @@ control_state = {
     "backward": False
 }
 
+
 #CHATGPT
 def teleop_listener():
     while True:
@@ -35,8 +36,8 @@ def teleop_listener():
 
 def plot_scene(ax, pose, world):
     ax.clear()
-    ax.set_xlim(-300, 300)
-    ax.set_ylim(-300, 300)
+    ax.set_xlim(-1500, 1500)
+    ax.set_ylim(-500, 1500)
     ax.set_xlabel("X (mm)")
     ax.set_ylabel("Y (mm)")
     ax.set_title("Vector and Marker Positions")
@@ -68,7 +69,9 @@ def plot_scene(ax, pose, world):
 
 
 def main():
+    # output_file_path = "marker10_log.csv"
     with anki_vector.Robot("006068a2") as robot:
+
         plt.ion()
         fig, ax = plt.subplots()
 
@@ -78,9 +81,13 @@ def main():
         pose_tracker = PoseTracker(start_pose, start_yaw, robot.pose, world)
 
         def on_robot_observed(robot, event_type, event):
+            # print("HELLo")
+            # print(f"Event received: {event.object_type}")
 
-            # pose_tracker.update_from_marker(event, robot.pose)
             pose_tracker.update_from_marker(event, robot.pose)
+            # x = pose_tracker.get_x()
+            # y = pose_tracker.get_y()
+            # writer.writerow([x, y])
             # else:
             #     pose_tracker.update_from_moving(robot.pose)
 

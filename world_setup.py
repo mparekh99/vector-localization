@@ -18,73 +18,44 @@ class World:
     
     def define_markers(self):
         self.robot.vision.enable_custom_object_detection(True)
-
-        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType00,
-        #                                     marker=CustomObjectMarkers.Circles2,
-        #                                     size_mm=25.4,
-        #                                     marker_width_mm=25.4,
-        #                                     marker_height_mm=25.4)
-
-        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType01,
-        #                                     marker=CustomObjectMarkers.Diamonds2,
-        #                                     size_mm=25.4,
-        #                                     marker_width_mm=25.4,
-        #                                     marker_height_mm=25.4)
-
-        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType02,
-        #                                     marker=CustomObjectMarkers.Hexagons2,
-        #                                     size_mm=25.4,
-        #                                     marker_width_mm=25.4,
-        #                                     marker_height_mm=25.4)
         
-        # ### FOR TESTING 
-        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType03,
-        #                                     marker=CustomObjectMarkers.Hexagons5,
-        #                                     size_mm=25.4,
-        #                                     marker_width_mm=25.4,
-        #                                     marker_height_mm=25.4)
-            
-        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType04,
-        #                                     marker=CustomObjectMarkers.Hexagons3,
-        #                                     size_mm=25.4,
-        #                                     marker_width_mm=25.4,
-        #                                     marker_height_mm=25.4)
-        
-        self.robot.world.define_custom_cube(CustomObjectTypes.CustomType05,
-                                            marker=CustomObjectMarkers.Triangles3,
-                                            size_mm=25.4,
-                                            marker_width_mm=25.4,
-                                            marker_height_mm=25.4)
-        
-        self.robot.world.define_custom_cube(CustomObjectTypes.CustomType06,
-                                            marker=CustomObjectMarkers.Triangles5,
-                                            size_mm=25.4,
-                                            marker_width_mm=25.4,
-                                            marker_height_mm=25.4)
-        
-        self.robot.world.define_custom_cube(CustomObjectTypes.CustomType07,
+        result = self.robot.world.define_custom_cube(CustomObjectTypes.CustomType00,
                                             marker=CustomObjectMarkers.Diamonds4,
-                                            size_mm=25.4,
-                                            marker_width_mm=25.4,
-                                            marker_height_mm=25.4)
+                                            size_mm=100,
+                                            marker_width_mm=100,
+                                            marker_height_mm=100) 
+        print(result)
+        
+
+        # print("HELLO")
+        
+        result = self.robot.world.define_custom_cube(CustomObjectTypes.CustomType01,
+                                            marker=CustomObjectMarkers.Triangles5,
+                                            size_mm=100,
+                                            marker_width_mm=100,
+                                            marker_height_mm=100) 
+        
+        print(result)
+        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType13,
+        #                                     marker=CustomObjectMarkers.Triangles5,
+        #                                     size_mm=24,
+        #                                     marker_width_mm=24,
+        #                                     marker_height_mm=24) 
+        
+
+        self.robot.world.define_custom_cube(CustomObjectTypes.CustomType03,
+                                            marker=CustomObjectMarkers.Triangles3,
+                                            size_mm=100,
+                                            marker_width_mm=100,
+                                            marker_height_mm=100) 
+        
+        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType01,
+        #                                     marker=CustomObjectMarkers.Diamonds4,
+        #                                     size_mm=24,
+        #                                     marker_width_mm=24,
+        #                                     marker_height_mm=24) 
     
-        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType07,
-        #                                     marker=CustomObjectMarkers.Diamonds5,
-        #                                     size_mm=25.4,
-        #                                     marker_width_mm=25.4,
-        #                                     marker_height_mm=25.4)
-        
-        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType08,
-        #                                     marker=CustomObjectMarkers.Circles5,
-        #                                     size_mm=25.4,
-        #                                     marker_width_mm=25.4,
-        #                                     marker_height_mm=25.4)
-        
-        # self.robot.world.define_custom_cube(CustomObjectTypes.CustomType09,
-        #                                     marker=CustomObjectMarkers.Triangles2,
-        #                                     size_mm=25.4,
-        #                                     marker_width_mm=25.4,
-        #                                     marker_height_mm=25.4)
+
             
     def set_head_and_lift(self):
         self.robot.behavior.set_head_angle(degrees(7.0))
@@ -95,22 +66,22 @@ class World:
         
         return {
             # Diamonds4
-            22: {
-                "pos": np.array([[0.0], [200.0], [50.0]]),
+            15 : {
+                "pos": np.array([[0.0], [1420.0], [100.0]]),
                 "label": "Front",
                 "axis": 1,
-                "translation": 77
+                "translation": 106
             },
             # Triangles5
-            21: {
-                "pos": np.array([[-200.0], [0.0], [50.0]]),
+            16: {
+                "pos": np.array([[-1420.0], [0.0], [100.0]]),
                 "label": "Left",
                 "axis": 0,
                 "translation": -77
             },
             # Triangles3
-            20: {
-                "pos": np.array([[200.0], [0.0], [50.0]]),
+            18: {
+                "pos": np.array([[1420.0], [0.0], [100.0]]),
                 "label": "Right",
                 "axis": 0,
                 "translation": 77
@@ -118,29 +89,29 @@ class World:
         }
 
     # https://www.geeksforgeeks.org/computer-graphics/computer-graphics-3d-rotation-transformations/ 
-    @staticmethod
-    def rotation_z(degrees_angle):
-        theta = np.radians(degrees_angle)
-        return np.array([
-            [np.cos(theta), -np.sin(theta), 0],
-            [np.sin(theta),  np.cos(theta), 0],
-            [0,              0,             1]
-        ])
-    @staticmethod
-    def rotation_y(degrees_angle):
-        theta = np.radians(degrees_angle)
-        return np.array([
-            [np.cos(theta), 0, np.sin(theta)],
-            [0,             1,             0],
-            [-np.sin(theta),0, np.cos(theta)]
-        ])
-    @staticmethod
-    def rotation_x(degrees_angle):
-        theta = np.radians(degrees_angle)
-        return np.array([
-            [1,              0,             0]
-            [0, np.cos(theta), -np.sin(theta)],
-            [0, np.sin(theta),  np.cos(theta)],
-        ])
+    # @staticmethod
+    # def rotation_z(degrees_angle):
+    #     theta = np.radians(degrees_angle)
+    #     return np.array([
+    #         [np.cos(theta), -np.sin(theta), 0],
+    #         [np.sin(theta),  np.cos(theta), 0],
+    #         [0,              0,             1]
+    #     ])
+    # @staticmethod
+    # def rotation_y(degrees_angle):
+    #     theta = np.radians(degrees_angle)
+    #     return np.array([
+    #         [np.cos(theta), 0, np.sin(theta)],
+    #         [0,             1,             0],
+    #         [-np.sin(theta),0, np.cos(theta)]
+    #     ])
+    # @staticmethod
+    # def rotation_x(degrees_angle):
+    #     theta = np.radians(degrees_angle)
+    #     return np.array([
+    #         [1,              0,             0]
+    #         [0, np.cos(theta), -np.sin(theta)],
+    #         [0, np.sin(theta),  np.cos(theta)],
+    #     ])
 
 
