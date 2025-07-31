@@ -2,18 +2,11 @@ import anki_vector
 import threading
 import time
 import matplotlib.pyplot as plt
-from anki_vector.objects import CustomObjectMarkers, CustomObjectTypes
 from world_setup import World
-import numpy as np
 import keyboard
 import math
 from anki_vector.events import Events
-import csv
 from pose_tracker import PoseTracker
-import os
-from utils import frame_transformation
-from quanterion import Quaternion
-
 
 #CHATGPT
 control_state = {
@@ -50,10 +43,6 @@ def plot_scene(ax, pose, world):
         ax.plot(x, y, 'ro')
         ax.text(x + 5, y + 5, f'{marker_info["label"]}', color='red', fontsize=8)
 
-    # Plot Vector's position and heading
-    # x = pose.get_dr_x()
-    # y = pose.get_dr_y()
-
     x = pose.get_x()
     y = pose.get_y()
     ax.plot(x, y, 'bo')
@@ -64,13 +53,10 @@ def plot_scene(ax, pose, world):
     dx = length * math.cos(pose.get_yaw())
     dy = length * math.sin(pose.get_yaw())
 
-    # print(f'{x} -- {y} -- {dx} -- {dy}')
-
     ax.arrow(x, y, dx, dy, head_width=50, head_length=50, fc='blue', ec='blue')
 
 
 def main():
-    # output_file_path = "marker10_log.csv"
     with anki_vector.Robot("006068a2") as robot:
 
         plt.ion()
@@ -82,27 +68,17 @@ def main():
         pose_tracker = PoseTracker(start_pose, start_yaw, robot.pose, world)
 
         def on_robot_observed(robot, event_type, event):
-            print("\n")
-            # print(f"Event received: {event.object_type}")
-
+            # CAMERA
             pose_tracker.update_from_marker(event, robot.pose)
-            # x = pose_tracker.get_x()
-            # y = pose_tracker.get_y()
-            # writer.writerow([x, y])
-            # else:
-            #     pose_tracker.update_from_moving(robot.pose)
-
 
         robot.events.subscribe(on_robot_observed, Events.robot_observed_object)
 
-        # Start teleop thread
         listener_thread = threading.Thread(target=teleop_listener, daemon=True)
         listener_thread.start()
 
         while True:
-            # # Update dead reckoning
-            # print(robot.pose.quaternion)
-            # pose_tracker.update_from_moving(robot)
+            #ODOM
+            pose_tracker.update_from_moving(robot)
 
 
             # #Plot

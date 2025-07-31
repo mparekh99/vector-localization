@@ -1,13 +1,11 @@
 import numpy as np
-import math
-from utils import quaternion_rotation_matrix
 
-# ODOMETRY MOTION MODEL
+# ODOMETRY MOTION MODEL with wheel speeds and gyroscope
 
 
 class DeadReckoning:
     def __init__(self, start_pose, start_yaw):
-        self.dr_pos = np.array(start_pose, dtype=np.float64).reshape(3,1)
+        self.dr_pos = np.array(start_pose, dtype=np.float64).reshape(3, 1)
         self.dr_yaw = start_yaw
     
     def reset(self, correct_pos, correct_yaw):
